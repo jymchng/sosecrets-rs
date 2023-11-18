@@ -1,65 +1,38 @@
+#![feature(generic_arg_infer)]
 #![feature(generic_const_exprs)]
-use std::{
-    marker::PhantomData,
-    mem::drop,
-    ops::{Deref, Drop},
-    ptr::NonNull,
-    boxed::Box;
-};
-struct SecretBox<T> {
-    pointer: NonNull<T>,
-    _phantom: PhantomData<T>,
-}
+use crate::generic_const_predicate;
 
-impl Drop for SecretBox<T> {
-    fn drop(&mut self) {
-        drop(self._phantom);
-        
+pub struct Secret<T, const MEC: usize, const EC: usize=0>(T);
+
+pub struct ExposedSecret<'brand, T, const MEC: usize, const EC: usize>(
+    T,
+    ::core::marker::PhantomData<fn(&'brand ()) -> &'brand ()>,
+);
+
+impl<T, const MEC: usize, const EC: usize> Secret<T, MEC, EC> {
+    pub fn new(value: T) -> Self {
+        Self(value)
+    }
+
+    pub fn expose_secret<ReturnType>(
+        self,
+        scope: impl FnOnce(ExposedSecret<'_, T, MEC, EC>) -> (ExposedSecret<'_, T, MEC, EC>, ReturnType),
+    ) -> (Secret<T, MEC, { EC + 1 }>, ReturnType)
+    where
+        generic_const_predicate!(MEC > EC):,
+        Secret<T, MEC, { EC + 1 }>:,
+    {
+        let (witness, returned_value) = scope(ExposedSecret(self.0, <_>::default()));
+        (Secret::new(witness.0), returned_value)
     }
 }
-struct Secret<T, const MEC: usize, const EC: usize = 0> {
-    inner_box: SecretBox<T>,
-}
-struct SecretGuard<'a, T, const EC: usize> {
-    inner_box: &'a SecretBox<T>,
-}
 
-impl<'a, T, const EC: usize> Deref for SecretGuard<'a, T, EC> {
+impl<T, const MEC: usize, const EC: usize> ::core::ops::Deref for ExposedSecret<'_, T, MEC, EC> {
     type Target = T;
 
     #[inline(always)]
     fn deref(&self) -> &T {
-        unsafe { self.inner_box.pointer.as_ref() }
-    }
-}
-impl<T, const MEC: usize> Secret<T, MEC> {
-    #[inline(always)]
-    pub fn new(value: T) -> Secret<T, MEC> {
-        let sb = SecretBox {
-            pointer: unsafe { NonNull::new_unchecked(Box::into_raw(Box::new(value))) },
-            _phantom: PhantomData,
-        };
-        Secret { inner_box: sb }
-    }
-}
-impl<T, const MEC: usize, const EC: usize> Secret<T, MEC, EC> {
-    const CHECK_EXPOSURE: () = assert!(EC < MEC, "Secret is over-exposed");
-    #[inline(always)]
-    #[must_use]
-    pub fn expose_secret<'a, 'b: 'a>(
-        &'b self,
-    ) -> (Secret<T, MEC, { EC + 1 }>, SecretGuard<'a, T, { EC + 1 }>) {
-        let _ = Self::CHECK_EXPOSURE;
-        let next_secret = Secret {
-            inner_box: SecretBox {
-                pointer: unsafe { NonNull::new_unchecked(self.inner_box.pointer.as_ptr()) },
-                _phantom: PhantomData,
-            },
-        };
-        let secret_guard = SecretGuard {
-            inner_box: &next_secret.inner_box,
-        };
-        (next_secret, secret_guard)
+        &self.0
     }
 }
 
@@ -67,27 +40,67 @@ impl<T, const MEC: usize, const EC: usize> Secret<T, MEC, EC> {
 mod tests {
 
     #[test]
-    fn test_one() {
+    fn test_expose_secret() {
         use super::*;
-
+        #[derive(Debug)]
         struct UseSecret {
             inner: String,
         }
         impl UseSecret {
-            fn new(value: String) -> Self {
+            fn new(value: impl AsRef<str>) -> Self {
+                Self { inner: value.as_ref().to_string() }
+            }
+        }
+
+        let new_secret: Secret<&str, 2, 0> = Secret::new("mySecret");
+        let (new_secret, returned_value) = new_secret.expose_secret(
+            |exposed_secret| {
+                let returned_value = UseSecret::new(*exposed_secret);
+                (exposed_secret, returned_value)
+            }
+        );
+        assert_eq!("mySecret", returned_value.inner);
+        let new_secret: Secret<&str, 2, 0> = Secret::new("mySecret");
+        let (new_secret, returned_value) = new_secret.expose_secret(
+            |exposed_secret| {
+                let returned_value = UseSecret::new(*exposed_secret);
+                (exposed_secret, returned_value)
+            }
+        );
+        assert_eq!("mySecret", returned_value.inner);
+        let new_secret: Secret<&str, 2> = Secret::new("mySecret");
+        let (new_secret, returned_value) = new_secret.expose_secret(
+            |exposed_secret| {
+                let returned_value = UseSecret::new(*exposed_secret);
+                (exposed_secret, returned_value)
+            }
+        );
+        assert_eq!("mySecret", returned_value.inner);
+    }
+
+    #[test]
+    fn test_expose_secret_2() {
+        use super::*;
+        #[derive(Debug)]
+        struct UseSecret {
+            inner: i32,
+        }
+        impl UseSecret {
+            fn new(value: i32) -> Self {
                 Self { inner: value }
             }
         }
-        let new_secret: Secret<String, 2> = Secret::new("hello".into());
-        let mut use_secret: UseSecret = UseSecret::new("".to_string());
-        let new_secret = new_secret.expose_secret(|ref _secret_string_ref| {
-            use_secret = UseSecret::new(_secret_string_ref.to_string());
+
+        let new_secret: Secret<_, 2> = Secret::new(69);
+        let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
+            let returned_value = UseSecret::new(*exposed_secret);
+            (exposed_secret, returned_value)
         });
-        let new_secret = new_secret.expose_secret(|ref _secret_string_ref| {
-            use_secret = UseSecret::new(_secret_string_ref.to_string());
+        assert_eq!(69, returned_value.inner);
+        let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
+            let returned_value = UseSecret::new(*exposed_secret);
+            (exposed_secret, returned_value)
         });
-        assert_eq!("hello".to_string(), *&use_secret.inner);
-        assert_ne!("bye".to_string(), use_secret.inner);
-        assert_eq!("hello".to_string(), use_secret.inner);
+        assert_eq!(69, returned_value.inner);
     }
 }
