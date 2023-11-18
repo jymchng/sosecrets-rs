@@ -1,13 +1,39 @@
 #![feature(generic_const_exprs)]
-use std::{marker::PhantomData, mem::drop, ops::Drop, ptr::NonNull};
+use std::{
+    marker::PhantomData,
+    mem::drop,
+    ops::{Deref, Drop},
+    ptr::NonNull,
+    boxed::Box;
+};
 struct SecretBox<T> {
     pointer: NonNull<T>,
     _phantom: PhantomData<T>,
 }
+
+impl Drop for SecretBox<T> {
+    fn drop(&mut self) {
+        drop(self._phantom);
+        
+    }
+}
 struct Secret<T, const MEC: usize, const EC: usize = 0> {
     inner_box: SecretBox<T>,
 }
+struct SecretGuard<'a, T, const EC: usize> {
+    inner_box: &'a SecretBox<T>,
+}
+
+impl<'a, T, const EC: usize> Deref for SecretGuard<'a, T, EC> {
+    type Target = T;
+
+    #[inline(always)]
+    fn deref(&self) -> &T {
+        unsafe { self.inner_box.pointer.as_ref() }
+    }
+}
 impl<T, const MEC: usize> Secret<T, MEC> {
+    #[inline(always)]
     pub fn new(value: T) -> Secret<T, MEC> {
         let sb = SecretBox {
             pointer: unsafe { NonNull::new_unchecked(Box::into_raw(Box::new(value))) },
@@ -17,18 +43,23 @@ impl<T, const MEC: usize> Secret<T, MEC> {
     }
 }
 impl<T, const MEC: usize, const EC: usize> Secret<T, MEC, EC> {
-    const NOT_MAX: () = assert!(EC < MEC, "Secret is over-exposed");
+    const CHECK_EXPOSURE: () = assert!(EC < MEC, "Secret is over-exposed");
+    #[inline(always)]
     #[must_use]
-    pub fn expose_secret(self, func: impl FnOnce(&T) -> ()) -> Secret<T, MEC, { EC + 1 }> {
-        let _ = Self::NOT_MAX;
-        let ref_t = unsafe { self.inner_box.pointer.as_ref() };
-        func(ref_t);
-        Secret {
+    pub fn expose_secret<'a, 'b: 'a>(
+        &'b self,
+    ) -> (Secret<T, MEC, { EC + 1 }>, SecretGuard<'a, T, { EC + 1 }>) {
+        let _ = Self::CHECK_EXPOSURE;
+        let next_secret = Secret {
             inner_box: SecretBox {
                 pointer: unsafe { NonNull::new_unchecked(self.inner_box.pointer.as_ptr()) },
                 _phantom: PhantomData,
             },
-        }
+        };
+        let secret_guard = SecretGuard {
+            inner_box: &next_secret.inner_box,
+        };
+        (next_secret, secret_guard)
     }
 }
 
