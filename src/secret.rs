@@ -10,10 +10,12 @@ pub struct ExposedSecret<'brand, T, const MEC: usize, const EC: usize = 0>(
 );
 
 impl<T, const MEC: usize, const EC: usize> Secret<T, MEC, EC> {
-    pub fn new(value: T) -> Self {
+    #[inline(always)]
+    pub const fn new(value: T) -> Self {
         Self(value)
     }
 
+    #[inline(always)]
     pub fn expose_secret<ReturnType>(
         self,
         scope: impl FnOnce(ExposedSecret<'_, T, MEC, EC>) -> (ExposedSecret<'_, T, MEC, EC>, ReturnType),

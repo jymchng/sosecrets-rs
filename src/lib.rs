@@ -1,4 +1,9 @@
 #![feature(generic_const_exprs)]
 
-pub mod secret;
-pub mod macros;
+mod secret;
+mod macros;
+
+pub mod prelude {
+    pub use crate::secret::*;
+    pub use crate::macros::*;
+}
