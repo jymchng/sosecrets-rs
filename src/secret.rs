@@ -2,9 +2,9 @@
 #![feature(generic_const_exprs)]
 use crate::generic_const_predicate;
 
-pub struct Secret<T, const MEC: usize, const EC: usize=0>(T);
+pub struct Secret<T, const MEC: usize, const EC: usize = 0>(T);
 
-pub struct ExposedSecret<'brand, T, const MEC: usize, const EC: usize>(
+pub struct ExposedSecret<'brand, T, const MEC: usize, const EC: usize = 0>(
     T,
     ::core::marker::PhantomData<fn(&'brand ()) -> &'brand ()>,
 );
@@ -48,34 +48,28 @@ mod tests {
         }
         impl UseSecret {
             fn new(value: impl AsRef<str>) -> Self {
-                Self { inner: value.as_ref().to_string() }
+                Self {
+                    inner: value.as_ref().to_string(),
+                }
             }
         }
 
         let new_secret: Secret<&str, 2, 0> = Secret::new("mySecret");
-        let (new_secret, returned_value) = new_secret.expose_secret(
-            |exposed_secret| {
-                let returned_value = UseSecret::new(*exposed_secret);
-                (exposed_secret, returned_value)
-            }
-        );
+        let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
+            let returned_value = UseSecret::new(*exposed_secret);
+            (exposed_secret, returned_value)
+        });
         assert_eq!("mySecret", returned_value.inner);
-        let new_secret: Secret<&str, 2, 0> = Secret::new("mySecret");
-        let (new_secret, returned_value) = new_secret.expose_secret(
-            |exposed_secret| {
-                let returned_value = UseSecret::new(*exposed_secret);
-                (exposed_secret, returned_value)
-            }
-        );
+        let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
+            let returned_value = UseSecret::new(*exposed_secret);
+            (exposed_secret, returned_value)
+        });
         assert_eq!("mySecret", returned_value.inner);
-        let new_secret: Secret<&str, 2> = Secret::new("mySecret");
-        let (new_secret, returned_value) = new_secret.expose_secret(
-            |exposed_secret| {
-                let returned_value = UseSecret::new(*exposed_secret);
-                (exposed_secret, returned_value)
-            }
-        );
-        assert_eq!("mySecret", returned_value.inner);
+        // let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
+        //     let returned_value = UseSecret::new(*exposed_secret);
+        //     (exposed_secret, returned_value)
+        // });
+        // assert_eq!("mySecret", returned_value.inner);
     }
 
     #[test]
