@@ -1,0 +1,16 @@
+error[E0599]: no method named `expose_secret` found for struct `sosecrets_rs::prelude::Secret` in the current scope
+  --> trybuild_tests/test_compile_fail_one.rs:10:51
+   |
+10 |     let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
+   |                                        -----------^^^^^^^^^^^^^ method not found in `Secret<String, UInt<UInt<UInt<UTerm, B1>, B0>, B1>>`
+   |
+  ::: src/traits.rs
+   |
+   |     fn expose_secret<ReturnType>(
+   |        ------------- the method is available for `sosecrets_rs::prelude::Secret<String, UInt<UInt<UInt<UTerm, B1>, B0>, B1>>` here
+   |
+   = help: items from traits can only be used if the trait is in scope
+help: the following trait is implemented but not in scope; perhaps add a `use` for it:
+   |
+1  + use sosecrets_rs::traits::ExposeSecret;
+   |
