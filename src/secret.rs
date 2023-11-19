@@ -1,13 +1,10 @@
-#![feature(generic_arg_infer)]
-#![feature(generic_const_exprs)]
 use typenum::{
+    assert_type,
     consts::{U0, U1},
     op,
     type_operators::IsLess,
-    Add1, Bit, Unsigned, B1,
+    Add1, Bit, IsGreater, Same, True, Unsigned, B0, B1,
 };
-
-use crate::generic_const_predicate;
 
 pub type AddU1<A> = <A as core::ops::Add<U1>>::Output;
 
@@ -28,14 +25,20 @@ pub struct ExposedSecret<'brand, T, MEC: Unsigned, EC: Unsigned>(
     ::core::marker::PhantomData<EC>,
 );
 
-impl<T, MEC: Unsigned, EC: core::ops::Add<typenum::U1> + Unsigned + typenum::IsLess<MEC>>
-    Secret<T, MEC, EC>
+impl<T, MEC: Unsigned> Secret<T, MEC, U0>
+where
+    U0: IsLess<MEC>,
 {
     #[inline(always)]
     pub fn new(value: T) -> Self {
         Self(value, <_>::default(), <_>::default())
     }
+}
 
+impl<T, MEC: Unsigned, EC: core::ops::Add<typenum::U1> + Unsigned + typenum::IsLess<MEC>>
+    Secret<T, MEC, EC>
+{
+    const ASSERT_EC_LESS_THAN_MEC: () = assert!(<<EC as IsLess<MEC>>::Output as Bit>::BOOL);
     #[inline(always)]
     pub fn expose_secret<ReturnType>(
         self,
@@ -43,15 +46,18 @@ impl<T, MEC: Unsigned, EC: core::ops::Add<typenum::U1> + Unsigned + typenum::IsL
     ) -> (Secret<T, MEC, AddU1<EC>>, ReturnType)
     where
         AddU1<EC>: core::ops::Add<typenum::U1> + Unsigned + typenum::IsLess<MEC>,
-        [(); <<EC as IsLess<MEC>>::Output as Bit>::BOOL as usize - 1]:,
     {
+        Self::ASSERT_EC_LESS_THAN_MEC;
         let (witness, returned_value) = scope(ExposedSecret(
             self.0,
             <_>::default(),
             <_>::default(),
             <_>::default(),
         ));
-        (Secret::new(witness.0), returned_value)
+        (
+            Secret(witness.0, <_>::default(), <_>::default()),
+            returned_value,
+        )
     }
 }
 
