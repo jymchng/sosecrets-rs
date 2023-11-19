@@ -15,3 +15,11 @@ repos:
     rev: v3.5.0
     hooks:
     -   id: validate_manifest
+
+-   repo: https://github.com/doublify/pre-commit-rust
+    rev: v1.0
+    hooks:
+    -   id: fmt
+        args: ['--verbose', '--edition', '2018', '--']
+    -   id: cargo-check
+    -   id: clippy
