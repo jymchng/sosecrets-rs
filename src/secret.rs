@@ -1,3 +1,4 @@
+use crate::traits::ExposeSecret;
 use typenum::{
     assert_type,
     consts::{U0, U1},
@@ -40,11 +41,12 @@ impl<
         T: Zeroize,
         MEC: Unsigned,
         EC: core::ops::Add<typenum::U1> + Unsigned + typenum::IsLess<MEC>,
-    > Secret<T, MEC, EC>
+    > ExposeSecret<'_, T, MEC, EC> for Secret<T, MEC, EC>
 {
-    const ASSERT_EC_LESS_THAN_MEC: () = assert!(<<EC as IsLess<MEC>>::Output as Bit>::BOOL);
+    type Exposed<'brand> = ExposedSecret<'brand, T, MEC, EC>;
+
     #[inline(always)]
-    pub fn expose_secret<ReturnType>(
+    fn expose_secret<ReturnType>(
         self,
         scope: impl FnOnce(ExposedSecret<'_, T, MEC, EC>) -> (ExposedSecret<'_, T, MEC, EC>, ReturnType),
     ) -> (Secret<T, MEC, AddU1<EC>>, ReturnType)
@@ -64,6 +66,35 @@ impl<
         )
     }
 }
+
+// impl<
+//         T: Zeroize,
+//         MEC: Unsigned,
+//         EC: core::ops::Add<typenum::U1> + Unsigned + typenum::IsLess<MEC>,
+//     > Secret<T, MEC, EC>
+// {
+//     const ASSERT_EC_LESS_THAN_MEC: () = assert!(<<EC as IsLess<MEC>>::Output as Bit>::BOOL);
+//     #[inline(always)]
+//     pub fn expose_secret<ReturnType>(
+//         self,
+//         scope: impl FnOnce(ExposedSecret<'_, T, MEC, EC>) -> (ExposedSecret<'_, T, MEC, EC>, ReturnType),
+//     ) -> (Secret<T, MEC, AddU1<EC>>, ReturnType)
+//     where
+//         AddU1<EC>: core::ops::Add<typenum::U1> + Unsigned + typenum::IsLess<MEC>,
+//     {
+//         Self::ASSERT_EC_LESS_THAN_MEC;
+//         let (witness, returned_value) = scope(ExposedSecret(
+//             self.0,
+//             <_>::default(),
+//             <_>::default(),
+//             <_>::default(),
+//         ));
+//         (
+//             Secret(witness.0, <_>::default(), <_>::default()),
+//             returned_value,
+//         )
+//     }
+// }
 
 impl<T: Zeroize, MEC: Unsigned, EC: Unsigned> ::core::ops::Deref for ExposedSecret<'_, T, MEC, EC> {
     type Target = T;
