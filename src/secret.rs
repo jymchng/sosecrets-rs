@@ -4,7 +4,7 @@ use typenum::{
     consts::{U0, U1},
     op,
     type_operators::IsLess,
-    Add1, Bit, False, IsEqual, Sum, True, UInt, UTerm, Unsigned, B1,
+    Add1, Bit, Unsigned, B1,
 };
 
 use crate::generic_const_predicate;
