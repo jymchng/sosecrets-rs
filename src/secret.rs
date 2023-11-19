@@ -5,11 +5,12 @@ use typenum::{
     type_operators::IsLess,
     Bit, IsGreater, Same, True, Unsigned, B0, B1,
 };
+use zeroize::Zeroize;
 
 pub type AddU1<A> = <A as core::ops::Add<U1>>::Output;
 
 pub struct Secret<
-    T,
+    T: Zeroize,
     MEC: Unsigned,
     EC: core::ops::Add<typenum::U1> + typenum::IsLess<MEC> + Unsigned = U0,
 >(
@@ -18,14 +19,14 @@ pub struct Secret<
     core::marker::PhantomData<EC>,
 );
 
-pub struct ExposedSecret<'brand, T, MEC: Unsigned, EC: Unsigned>(
+pub struct ExposedSecret<'brand, T: Zeroize, MEC: Unsigned, EC: Unsigned>(
     T,
     ::core::marker::PhantomData<fn(&'brand ()) -> &'brand ()>,
     ::core::marker::PhantomData<MEC>,
     ::core::marker::PhantomData<EC>,
 );
 
-impl<T, MEC: Unsigned> Secret<T, MEC, U0>
+impl<T: Zeroize, MEC: Unsigned> Secret<T, MEC, U0>
 where
     U0: IsLess<MEC>,
 {
@@ -35,8 +36,11 @@ where
     }
 }
 
-impl<T, MEC: Unsigned, EC: core::ops::Add<typenum::U1> + Unsigned + typenum::IsLess<MEC>>
-    Secret<T, MEC, EC>
+impl<
+        T: Zeroize,
+        MEC: Unsigned,
+        EC: core::ops::Add<typenum::U1> + Unsigned + typenum::IsLess<MEC>,
+    > Secret<T, MEC, EC>
 {
     const ASSERT_EC_LESS_THAN_MEC: () = assert!(<<EC as IsLess<MEC>>::Output as Bit>::BOOL);
     #[inline(always)]
@@ -61,7 +65,7 @@ impl<T, MEC: Unsigned, EC: core::ops::Add<typenum::U1> + Unsigned + typenum::IsL
     }
 }
 
-impl<T, MEC: Unsigned, EC: Unsigned> ::core::ops::Deref for ExposedSecret<'_, T, MEC, EC> {
+impl<T: Zeroize, MEC: Unsigned, EC: Unsigned> ::core::ops::Deref for ExposedSecret<'_, T, MEC, EC> {
     type Target = T;
 
     #[inline(always)]
@@ -88,16 +92,19 @@ mod tests {
     #[test]
     fn test_expose_secret() {
         let new_secret: Secret<String, U3> = Secret::new("mySecret".to_string());
+
         let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
             let returned_value = UseSecret::new((*exposed_secret).to_string());
             (exposed_secret, returned_value)
         });
         assert_eq!("mySecret", &returned_value.inner);
+
         let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
             let returned_value = UseSecret::new((*exposed_secret).to_string());
             (exposed_secret, returned_value)
         });
         assert_eq!("mySecret", &returned_value.inner);
+
         // let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
         //     let returned_value = UseSecret::new(*exposed_secret);
         //     (exposed_secret, returned_value)
@@ -108,16 +115,19 @@ mod tests {
     #[test]
     fn test_expose_secret_2() {
         let new_secret: Secret<_, U2> = Secret::new(69);
+
         let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
             let returned_value = UseSecret::new(*exposed_secret);
             (exposed_secret, returned_value)
         });
         assert_eq!(69, returned_value.inner);
+
         let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
             let returned_value = UseSecret::new(*exposed_secret);
             (exposed_secret, returned_value)
         });
         assert_eq!(69, returned_value.inner);
+
         // let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
         //     let returned_value = UseSecret::new(*exposed_secret);
         //     (exposed_secret, returned_value)
