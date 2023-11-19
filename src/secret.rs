@@ -101,17 +101,17 @@ mod tests {
 
     #[test]
     fn test_expose_secret_2() {
-        let new_secret: Secret<_, U2, U5> = Secret::new(69);
-        // let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
-        //     let returned_value = UseSecret::new(*exposed_secret);
-        //     (exposed_secret, returned_value)
-        // });
-        // assert_eq!(69, returned_value.inner);
-        // let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
-        //     let returned_value = UseSecret::new(*exposed_secret);
-        //     (exposed_secret, returned_value)
-        // });
-        // assert_eq!(69, returned_value.inner);
+        let new_secret: Secret<_, U2> = Secret::new(69);
+        let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
+            let returned_value = UseSecret::new(*exposed_secret);
+            (exposed_secret, returned_value)
+        });
+        assert_eq!(69, returned_value.inner);
+        let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
+            let returned_value = UseSecret::new(*exposed_secret);
+            (exposed_secret, returned_value)
+        });
+        assert_eq!(69, returned_value.inner);
         // let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
         //     let returned_value = UseSecret::new(*exposed_secret);
         //     (exposed_secret, returned_value)
