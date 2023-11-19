@@ -5,7 +5,6 @@ mod common;
 #[test]
 fn test_expose_secret() {
     use common::{self, UseSecret};
-    use zeroize::{DefaultIsZeroes, Zeroize};
     let secret = "MySecret".to_owned();
     let new_secret: Secret<_, U5, _> = Secret::new(secret);
     let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {

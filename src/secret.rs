@@ -1,4 +1,4 @@
-use crate::traits::ExposeSecret;
+// use crate::traits::ExposeSecret;
 use typenum::{
     assert_type,
     consts::{U0, U1},
@@ -37,52 +37,23 @@ where
     }
 }
 
-impl<
-        T: Zeroize,
-        MEC: Unsigned,
-        EC: core::ops::Add<typenum::U1> + Unsigned + typenum::IsLess<MEC>,
-    > ExposeSecret<'_, T, MEC, EC> for Secret<T, MEC, EC>
-{
-    type Exposed<'brand> = ExposedSecret<'brand, T, MEC, EC>;
-
-    #[inline(always)]
-    fn expose_secret<ReturnType>(
-        self,
-        scope: impl FnOnce(ExposedSecret<'_, T, MEC, EC>) -> (ExposedSecret<'_, T, MEC, EC>, ReturnType),
-    ) -> (Secret<T, MEC, AddU1<EC>>, ReturnType)
-    where
-        AddU1<EC>: core::ops::Add<typenum::U1> + Unsigned + typenum::IsLess<MEC>,
-    {
-        Self::ASSERT_EC_LESS_THAN_MEC;
-        let (witness, returned_value) = scope(ExposedSecret(
-            self.0,
-            <_>::default(),
-            <_>::default(),
-            <_>::default(),
-        ));
-        (
-            Secret(witness.0, <_>::default(), <_>::default()),
-            returned_value,
-        )
-    }
-}
-
 // impl<
 //         T: Zeroize,
 //         MEC: Unsigned,
 //         EC: core::ops::Add<typenum::U1> + Unsigned + typenum::IsLess<MEC>,
-//     > Secret<T, MEC, EC>
+//     > ExposeSecret<T, MEC, EC> for Secret<T, MEC, EC>
 // {
-//     const ASSERT_EC_LESS_THAN_MEC: () = assert!(<<EC as IsLess<MEC>>::Output as Bit>::BOOL);
+//     type Exposed<'brand> = ExposedSecret<'brand, T, MEC, EC>;
+
 //     #[inline(always)]
-//     pub fn expose_secret<ReturnType>(
+//     fn expose_secret<ReturnType>(
 //         self,
 //         scope: impl FnOnce(ExposedSecret<'_, T, MEC, EC>) -> (ExposedSecret<'_, T, MEC, EC>, ReturnType),
 //     ) -> (Secret<T, MEC, AddU1<EC>>, ReturnType)
 //     where
-//         AddU1<EC>: core::ops::Add<typenum::U1> + Unsigned + typenum::IsLess<MEC>,
+//         AddU1<EC>: core::ops::Add<typenum::U1> + Unsigned + typenum::IsLess<MEC, Output = True>,
+//         EC: IsLess<MEC, Output = True>,
 //     {
-//         Self::ASSERT_EC_LESS_THAN_MEC;
 //         let (witness, returned_value) = scope(ExposedSecret(
 //             self.0,
 //             <_>::default(),
@@ -95,6 +66,34 @@ impl<
 //         )
 //     }
 // }
+
+impl<
+        T: Zeroize,
+        MEC: Unsigned,
+        EC: core::ops::Add<typenum::U1> + Unsigned + typenum::IsLess<MEC>,
+    > Secret<T, MEC, EC>
+{
+    #[inline(always)]
+    pub fn expose_secret<ReturnType>(
+        self,
+        scope: impl FnOnce(ExposedSecret<'_, T, MEC, EC>) -> (ExposedSecret<'_, T, MEC, EC>, ReturnType),
+    ) -> (Secret<T, MEC, AddU1<EC>>, ReturnType)
+    where
+        AddU1<EC>: core::ops::Add<typenum::U1> + Unsigned + typenum::IsLess<MEC>,
+        EC: IsLess<MEC, Output=True>,
+    {
+        let (witness, returned_value) = scope(ExposedSecret(
+            self.0,
+            <_>::default(),
+            <_>::default(),
+            <_>::default(),
+        ));
+        (
+            Secret(witness.0, <_>::default(), <_>::default()),
+            returned_value,
+        )
+    }
+}
 
 impl<T: Zeroize, MEC: Unsigned, EC: Unsigned> ::core::ops::Deref for ExposedSecret<'_, T, MEC, EC> {
     type Target = T;
@@ -122,7 +121,7 @@ mod tests {
 
     #[test]
     fn test_expose_secret() {
-        let new_secret: Secret<String, U3> = Secret::new("mySecret".to_string());
+        let new_secret: Secret<String, U2> = Secret::new("mySecret".to_string());
 
         let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
             let returned_value = UseSecret::new((*exposed_secret).to_string());
@@ -137,7 +136,7 @@ mod tests {
         assert_eq!("mySecret", &returned_value.inner);
 
         // let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
-        //     let returned_value = UseSecret::new(*exposed_secret);
+        //     let returned_value = UseSecret::new((*exposed_secret).to_string());
         //     (exposed_secret, returned_value)
         // });
         // assert_eq!("mySecret", returned_value.inner);
