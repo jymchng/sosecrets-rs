@@ -3,7 +3,7 @@ use typenum::consts::U5;
 mod common;
 
 fn main() {
-    use common::{UseSecret};
+    use common::UseSecret;
 
     let secret = "MySecret".to_owned();
     let new_secret: Secret<_, U5, _> = Secret::new(secret);
@@ -13,5 +13,3 @@ fn main() {
     });
     assert_eq!(returned_value.inner, "MySecret".to_owned());
 }
-
-

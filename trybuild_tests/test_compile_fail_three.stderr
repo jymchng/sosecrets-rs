@@ -1,0 +1,18 @@
+warning: unused import: `common::UseSecret`
+ --> trybuild_tests/test_compile_fail_three.rs:6:9
+  |
+6 |     use common::UseSecret;
+  |         ^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+error[E0308]: mismatched types
+ --> trybuild_tests/test_compile_fail_three.rs:9:42
+  |
+9 |     let new_secret: Secret<_, U5, U67> = Secret::new(secret);
+  |                     ------------------   ^^^^^^^^^^^^^^^^^^^ expected `Secret<_, UInt<..., ...>, ...>`, found `Secret<String, _>`
+  |                     |
+  |                     expected due to this
+  |
+  = note: expected struct `sosecrets_rs::prelude::Secret<_, UInt<UInt<UInt<UTerm, B1>, B0>, B1>, UInt<UInt<UInt<UInt<UInt<UInt<UInt<UTerm, B1>, B0>, B0>, B0>, B0>, B1>, B1>>`
+             found struct `sosecrets_rs::prelude::Secret<String, _, UTerm>`

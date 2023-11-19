@@ -1,8 +1,6 @@
 use crate::traits::ExposeSecret;
 use typenum::{
-    assert_type,
     consts::{U0, U1},
-    op,
     type_operators::IsLess,
     Bit, IsGreater, Same, True, Unsigned, B0, B1,
 };
