@@ -7,4 +7,4 @@ edition = "2021"
 
 [dependencies]
 typenum = "1.17.0"
-zeroize = { version = "1.6.0", features = ["alloc", "derive"] }
+zeroize = { version = "1.6.0" }
