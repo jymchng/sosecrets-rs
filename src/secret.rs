@@ -3,7 +3,7 @@ use typenum::{
     consts::{U0, U1},
     op,
     type_operators::IsLess,
-    Add1, Bit, IsGreater, Same, True, Unsigned, B0, B1,
+    Bit, IsGreater, Same, True, Unsigned, B0, B1,
 };
 
 pub type AddU1<A> = <A as core::ops::Add<U1>>::Output;
