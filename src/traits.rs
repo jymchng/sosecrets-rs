@@ -17,3 +17,9 @@ pub trait ExposeSecret<'max, T, MEC: Unsigned, EC: Unsigned>: Sized {
         EC: Add<U1> + IsLess<MEC, Output = True>,
         Sum<EC, U1>: Unsigned + Add<U1> + IsLess<MEC>;
 }
+
+pub trait CloneableSecret<T: Clone, MEC: Unsigned, EC: Unsigned + IsLess<MEC> + Add<U1>>:
+    Sized
+{
+    fn clone_secret(&self) -> Self;
+}

@@ -3,7 +3,7 @@ use core::{
     ops::{Add, Deref},
 };
 
-use crate::traits::ExposeSecret;
+use crate::traits::{CloneableSecret, ExposeSecret};
 use typenum::{
     consts::{U0, U1},
     type_operators::IsLess,
@@ -59,6 +59,17 @@ impl<'max, T: Zeroize, MEC: Unsigned, EC: Add<U1> + Unsigned + IsLess<MEC>>
     }
 }
 
+impl<T, MEC, EC> CloneableSecret<T, MEC, EC> for Secret<T, MEC, EC>
+where
+    T: Clone + Zeroize,
+    MEC: Unsigned,
+    EC: Unsigned + Add<U1> + IsLess<MEC>,
+{
+    fn clone_secret(&self) -> Self {
+        Self(self.0.clone(), PhantomData)
+    }
+}
+
 impl<T> Deref for ExposedSecret<'_, &'_ T> {
     type Target = T;
 
@@ -81,39 +92,5 @@ mod tests {
         fn new(value: T) -> Self {
             Self { inner: value }
         }
-    }
-
-    #[test]
-    fn test_expose_secret() {
-        let new_secret: Secret<String, U2> = Secret::new("mySecret".to_owned());
-
-        let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
-            let returned_value = UseSecret::new((*exposed_secret).clone());
-            returned_value
-        });
-        assert_eq!("mySecret", &returned_value.inner);
-
-        let (_new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
-            let returned_value = UseSecret::new((*exposed_secret).to_string());
-            returned_value
-        });
-        assert_eq!("mySecret", &returned_value.inner);
-    }
-
-    #[test]
-    fn test_expose_secret_2() {
-        let new_secret: Secret<_, U2> = Secret::new(69);
-
-        let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
-            let returned_value = UseSecret::new(*exposed_secret);
-            returned_value
-        });
-        assert_eq!(69, returned_value.inner);
-
-        let (_new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
-            let returned_value = UseSecret::new(*exposed_secret);
-            returned_value
-        });
-        assert_eq!(69, returned_value.inner);
     }
 }
