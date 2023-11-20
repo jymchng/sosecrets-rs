@@ -9,20 +9,20 @@ fn main() {
 
     let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
         let returned_value = UseSecret::new((*exposed_secret).to_string());
-        (exposed_secret, returned_value)
+        returned_value
     });
     assert_eq!("mySecret", &returned_value.inner);
 
     let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
         let returned_value = UseSecret::new((*exposed_secret).to_string());
-        (exposed_secret, returned_value)
+        returned_value
     });
     assert_eq!("mySecret", &returned_value.inner);
 
     // Compilation fails
     let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
         let returned_value = UseSecret::new((*exposed_secret).to_string());
-        (exposed_secret, returned_value)
+        returned_value
     });
     assert_eq!("mySecret", returned_value.inner);
 
@@ -40,5 +40,4 @@ fn main() {
     // ...
     // |         EC: IsLess<MEC, Output = True>;
     // |                         ^^^^^^^^^^^^^ required by this bound in `ExposeSecret::expose_secret`
-
 }

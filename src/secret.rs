@@ -1,4 +1,7 @@
-use std::marker::PhantomData;
+use core::{
+    marker::PhantomData,
+    ops::{Add, Deref},
+};
 
 use crate::traits::ExposeSecret;
 use typenum::{
@@ -6,7 +9,7 @@ use typenum::{
     type_operators::IsLess,
     Sum, True, Unsigned,
 };
-use zeroize::{DefaultIsZeroes, Zeroize};
+use zeroize::Zeroize;
 
 pub type AddU1<A> = <A as core::ops::Add<U1>>::Output;
 
@@ -14,26 +17,22 @@ pub struct Secret<
     T: Zeroize,
     MEC: Unsigned,
     EC: core::ops::Add<typenum::U1> + typenum::IsLess<MEC> + Unsigned = U0,
->(T, core::marker::PhantomData<(MEC, EC)>);
+>(T, PhantomData<(MEC, EC)>);
 
-pub struct ExposedSecret<'brand, T>(T, ::core::marker::PhantomData<fn(&'brand ()) -> &'brand ()>);
+pub struct ExposedSecret<'brand, T>(T, PhantomData<fn(&'brand ()) -> &'brand ()>);
 
 impl<T: Zeroize, MEC: Unsigned> Secret<T, MEC, U0>
 where
     U0: IsLess<MEC>,
 {
     #[inline(always)]
-    pub fn new(value: T) -> Self {
+    pub const fn new(value: T) -> Self {
         Self(value, PhantomData)
     }
 }
 
-impl<
-        'max,
-        T: Zeroize,
-        MEC: Unsigned,
-        EC: core::ops::Add<typenum::U1> + Unsigned + typenum::IsLess<MEC>,
-    > ExposeSecret<'max, &'max T, MEC, EC> for Secret<T, MEC, EC>
+impl<'max, T: Zeroize, MEC: Unsigned, EC: Add<U1> + Unsigned + IsLess<MEC>>
+    ExposeSecret<'max, &'max T, MEC, EC> for Secret<T, MEC, EC>
 {
     type Exposed<'brand> = ExposedSecret<'brand, &'brand T>
     where
@@ -41,8 +40,8 @@ impl<
 
     type Next = Secret<T, MEC, Sum<EC, U1>>
     where
-        EC: core::ops::Add<U1> + Unsigned + typenum::IsLess<MEC>,
-        Sum<EC, U1>: Unsigned + IsLess<MEC> + core::ops::Add<typenum::U1>,
+        EC: Add<U1> + Unsigned + IsLess<MEC>,
+        Sum<EC, U1>: Unsigned + IsLess<MEC> + Add<U1>,
         T: Zeroize;
 
     #[inline(always)]
@@ -51,7 +50,7 @@ impl<
         scope: ClosureType,
     ) -> (Secret<T, MEC, AddU1<EC>>, ReturnType)
     where
-        AddU1<EC>: core::ops::Add<typenum::U1> + Unsigned + typenum::IsLess<MEC>,
+        AddU1<EC>: Add<U1> + Unsigned + IsLess<MEC>,
         EC: IsLess<MEC, Output = True>,
         for<'brand> ClosureType: FnOnce(ExposedSecret<'brand, &'brand T>) -> ReturnType,
     {
@@ -60,7 +59,7 @@ impl<
     }
 }
 
-impl<T: Zeroize + DefaultIsZeroes> ::core::ops::Deref for ExposedSecret<'_, &'_ T> {
+impl<T> Deref for ExposedSecret<'_, &'_ T> {
     type Target = T;
 
     #[inline(always)]
@@ -73,7 +72,7 @@ impl<T: Zeroize + DefaultIsZeroes> ::core::ops::Deref for ExposedSecret<'_, &'_ 
 mod tests {
 
     use super::*;
-    use typenum::consts::{U1, U2, U3, U4, U5};
+    use typenum::consts::U2;
     #[derive(Debug)]
     struct UseSecret<T> {
         inner: T,
@@ -86,25 +85,19 @@ mod tests {
 
     #[test]
     fn test_expose_secret() {
-        let new_secret: Secret<String, U2> = Secret::new("mySecret".to_string());
+        let new_secret: Secret<String, U2> = Secret::new("mySecret".to_owned());
 
         let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
-            let returned_value = UseSecret::new((*exposed_secret).to_string());
-            (exposed_secret, returned_value)
+            let returned_value = UseSecret::new((*exposed_secret).clone());
+            returned_value
         });
         assert_eq!("mySecret", &returned_value.inner);
 
-        let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
+        let (_new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
             let returned_value = UseSecret::new((*exposed_secret).to_string());
-            (exposed_secret, returned_value)
+            returned_value
         });
         assert_eq!("mySecret", &returned_value.inner);
-
-        // let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
-        //     let returned_value = UseSecret::new((*exposed_secret).to_string());
-        //     (exposed_secret, returned_value)
-        // });
-        // assert_eq!("mySecret", returned_value.inner);
     }
 
     #[test]
@@ -113,20 +106,14 @@ mod tests {
 
         let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
             let returned_value = UseSecret::new(*exposed_secret);
-            (exposed_secret, returned_value)
+            returned_value
         });
         assert_eq!(69, returned_value.inner);
 
-        let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
+        let (_new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
             let returned_value = UseSecret::new(*exposed_secret);
-            (exposed_secret, returned_value)
+            returned_value
         });
         assert_eq!(69, returned_value.inner);
-
-        // let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
-        //     let returned_value = UseSecret::new(*exposed_secret);
-        //     (exposed_secret, returned_value)
-        // });
-        // assert_eq!(69, returned_value.inner);
     }
 }
