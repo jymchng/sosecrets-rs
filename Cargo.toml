@@ -2,16 +2,13 @@
 name = "sosecrets-rs"
 version = "0.1.0"
 edition = "2021"
+authors = ["Jim Chng <jimchng@outlook.com>"]
+rust-version = "1.70"
+readme = "README.md"
+license-file = "LICENSE"
+repository = "https://github.com/jymchng/sosecrets-rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-# [[bin]]
-# name = 'test_compile_fail_one'
-# path = "trybuild_tests/test_compile_fail_one.rs"
-
-# [[bin]]
-# name = 'test_compile_fail_two'
-# path = "trybuild_tests/test_compile_fail_two.rs"
 
 [dependencies]
 typenum = "1.17.0"

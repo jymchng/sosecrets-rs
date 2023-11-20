@@ -2,12 +2,19 @@
 
 Aims to be a crate for Secrets Management in Rust.
 
-# Objectives
+# Minimum Supported Rust version
 
-1. Limit the number of times a value can be used at compile time.
+The crate currently requires Rust 1.70. I have no intent of increasing the
+compiler version requirement of this crate beyond this. However, this is only
+guaranteed within a given minor version number.
 
-# To-do
+# License
 
-|Issue|Objective|Progress|
-|:--|:--|:--|
-|Operations on const generics are not yet stable|Make `typenum` a dependency.|Not started|
+Licensed under
+
+- MIT license ([LICENSE-MIT](LICENSE-MIT) or <http://opensource.org/licenses/MIT>)
+
+# Contribution
+
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the MIT license, without any additional terms or conditions.
