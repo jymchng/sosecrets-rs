@@ -84,3 +84,13 @@ fn test_clone_secret_1() {
     });
     assert_eq!(69, returned_value.inner);
 }
+
+#[test]
+fn test_destruct_secret_1() {
+    use sosecrets_rs::traits::{CloneableSecret, SecretIntoInner};
+
+    let new_secret: Secret<_, U2> = Secret::new(69);
+
+    let got_out_inner_value = new_secret.into_inner();
+    assert_eq!(got_out_inner_value, 69);
+}

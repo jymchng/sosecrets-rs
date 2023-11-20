@@ -1,5 +1,6 @@
 use core::ops::Add;
 use typenum::{consts::U1, IsLess, Sum, True, Unsigned};
+use zeroize::Zeroize;
 
 pub trait ExposeSecret<'max, T, MEC: Unsigned, EC: Unsigned>: Sized {
     type Exposed<'brand>
@@ -22,4 +23,13 @@ pub trait CloneableSecret<T: Clone, MEC: Unsigned, EC: Unsigned + IsLess<MEC> + 
     Sized
 {
     fn clone_secret(&self) -> Self;
+}
+
+pub trait SecretIntoInner<T, MEC, EC>: Sized
+where
+    T: Zeroize,
+    MEC: Unsigned,
+    EC: Unsigned + Add<U1> + IsLess<MEC>,
+{
+    fn into_inner(self) -> T;
 }

@@ -4,7 +4,7 @@ use core::{
     ops::{Add, Deref, Drop},
 };
 
-use crate::traits::{CloneableSecret, ExposeSecret};
+use crate::traits::{CloneableSecret, ExposeSecret, SecretIntoInner};
 use typenum::{
     consts::{U0, U1},
     type_operators::IsLess,
@@ -105,5 +105,16 @@ where
             // therefore, this is safe.
             (unsafe { ManuallyDrop::take(&mut self.0) }).zeroize();
         }
+    }
+}
+
+impl<T, MEC, EC> SecretIntoInner<T, MEC, EC> for Secret<T, MEC, EC>
+where
+    T: Zeroize,
+    MEC: Unsigned,
+    EC: Unsigned + Add<U1> + IsLess<MEC>,
+{
+    fn into_inner(mut self) -> T {
+        unsafe { ManuallyDrop::take(&mut self.0) }
     }
 }
