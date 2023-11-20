@@ -103,7 +103,9 @@ where
             // and it is not possible to call `expose_secret(...)`
             // when `Secret` is maximally exposed to access **private** `self.0` field,
             // therefore, this is safe.
-            (unsafe { ManuallyDrop::take(&mut self.0) }).zeroize();
+            let mut inner = unsafe { ManuallyDrop::take(&mut self.0) };
+            inner.zeroize();
+            drop(inner);
         }
     }
 }
