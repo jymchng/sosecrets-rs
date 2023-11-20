@@ -23,6 +23,7 @@ fn main() {
     });
     assert_eq!(69, returned_value.inner);
 
+    // Cloned `Secret` over exposed here
     let (_cloned_secret, returned_value) = _cloned_secret.expose_secret(|exposed_secret| {
         let returned_value = UseSecret::new(*exposed_secret);
         returned_value

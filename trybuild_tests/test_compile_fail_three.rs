@@ -3,5 +3,6 @@ use typenum::consts::{U5, U67};
 
 fn main() {
     let secret = "MySecret".to_owned();
-    let new_secret: Secret<_, U5, U67> = Secret::new(secret);
+    // Tests EC as type argument must be lesser than MEC on the LHS
+    let new_secret: Secret<String, U5, U67> = Secret::new(secret);
 }

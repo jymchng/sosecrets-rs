@@ -5,25 +5,22 @@ use core::{
 };
 
 use crate::traits::{CloneableSecret, ExposeSecret, SecretIntoInner};
-use typenum::{
-    consts::{U0, U1},
-    type_operators::IsLess,
-    Sum, True, Unsigned,
-};
+use typenum::{IsLessOrEqual, Sum, True, Unsigned, U0, U1};
 use zeroize::Zeroize;
 
 pub type AddU1<A> = <A as core::ops::Add<U1>>::Output;
 
-pub struct Secret<T: Zeroize, MEC: Unsigned, EC: Add<U1> + IsLess<MEC> + Unsigned = U0>(
-    ManuallyDrop<T>,
-    PhantomData<(MEC, EC)>,
-);
+pub struct Secret<
+    T: Zeroize,
+    MEC: Unsigned,
+    EC: Add<U1> + IsLessOrEqual<MEC, Output = True> + Unsigned = U0,
+>(ManuallyDrop<T>, PhantomData<(MEC, EC)>);
 
 pub struct ExposedSecret<'brand, T>(T, PhantomData<fn(&'brand ()) -> &'brand ()>);
 
 impl<T: Zeroize, MEC: Unsigned> Secret<T, MEC, U0>
 where
-    U0: IsLess<MEC>,
+    U0: IsLessOrEqual<MEC, Output = True>,
 {
     #[inline(always)]
     pub const fn new(value: T) -> Self {
@@ -31,8 +28,12 @@ where
     }
 }
 
-impl<'max, T: Zeroize, MEC: Unsigned, EC: Add<U1> + Unsigned + IsLess<MEC>>
-    ExposeSecret<'max, &'max T, MEC, EC> for Secret<T, MEC, EC>
+impl<
+        'max,
+        T: Zeroize,
+        MEC: Unsigned,
+        EC: Add<U1> + Unsigned + IsLessOrEqual<MEC, Output = True>,
+    > ExposeSecret<'max, &'max T, MEC, EC> for Secret<T, MEC, EC>
 {
     type Exposed<'brand> = ExposedSecret<'brand, &'brand T>
     where
@@ -40,8 +41,8 @@ impl<'max, T: Zeroize, MEC: Unsigned, EC: Add<U1> + Unsigned + IsLess<MEC>>
 
     type Next = Secret<T, MEC, Sum<EC, U1>>
     where
-        EC: Add<U1> + Unsigned + IsLess<MEC>,
-        Sum<EC, U1>: Unsigned + IsLess<MEC> + Add<U1>,
+        EC: Add<U1> + Unsigned + IsLessOrEqual<MEC, Output = True>,
+        Sum<EC, U1>: Unsigned + IsLessOrEqual<MEC, Output = True> + Add<U1>,
         T: Zeroize;
 
     #[inline(always)]
@@ -50,8 +51,8 @@ impl<'max, T: Zeroize, MEC: Unsigned, EC: Add<U1> + Unsigned + IsLess<MEC>>
         scope: ClosureType,
     ) -> (Secret<T, MEC, AddU1<EC>>, ReturnType)
     where
-        AddU1<EC>: Add<U1> + Unsigned + IsLess<MEC>,
-        EC: IsLess<MEC, Output = True>,
+        AddU1<EC>: Add<U1> + Unsigned + IsLessOrEqual<MEC, Output = True>,
+        EC: IsLessOrEqual<MEC, Output = True>,
         for<'brand> ClosureType: FnOnce(ExposedSecret<'brand, &'brand T>) -> ReturnType,
     {
         let returned_value = scope(ExposedSecret(&self.0, PhantomData));
@@ -74,7 +75,7 @@ impl<T, MEC, EC> CloneableSecret<T, MEC, EC> for Secret<T, MEC, EC>
 where
     T: Clone + Zeroize,
     MEC: Unsigned,
-    EC: Unsigned + Add<U1> + IsLess<MEC>,
+    EC: Unsigned + Add<U1> + IsLessOrEqual<MEC, Output = True>,
 {
     fn clone_secret(&self) -> Self {
         Self(self.0.clone(), PhantomData)
@@ -94,7 +95,7 @@ impl<T, MEC, EC> Drop for Secret<T, MEC, EC>
 where
     T: Zeroize,
     MEC: Unsigned,
-    EC: Add<U1> + Unsigned + IsLess<MEC>,
+    EC: Add<U1> + Unsigned + IsLessOrEqual<MEC, Output = True>,
 {
     fn drop(&mut self) {
         if EC::to_u64() == MEC::to_u64() {
@@ -114,7 +115,7 @@ impl<T, MEC, EC> SecretIntoInner<T, MEC, EC> for Secret<T, MEC, EC>
 where
     T: Zeroize,
     MEC: Unsigned,
-    EC: Unsigned + Add<U1> + IsLess<MEC>,
+    EC: Unsigned + Add<U1> + IsLessOrEqual<MEC, Output = True>,
 {
     fn into_inner(mut self) -> T {
         unsafe { ManuallyDrop::take(&mut self.0) }

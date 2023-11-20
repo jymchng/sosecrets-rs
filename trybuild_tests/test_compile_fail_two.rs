@@ -2,6 +2,7 @@ use sosecrets_rs::{prelude::*, traits::ExposeSecret};
 use typenum::consts::U2;
 mod common;
 
+// Tests over exposed
 fn main() {
     use common::UseSecret;
 

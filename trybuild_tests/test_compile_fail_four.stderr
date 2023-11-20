@@ -1,14 +1,14 @@
-error[E0271]: type mismatch resolving `<UInt<UInt<UTerm, B1>, B0> as IsLess>::Output == B1`
-  --> trybuild_tests/test_compile_fail_four.rs:26:59
+error[E0271]: type mismatch resolving `<UInt<UInt<UTerm, B1>, B1> as IsLessOrEqual<UInt<UInt<UTerm, B1>, B0>>>::Output == B1`
+  --> trybuild_tests/test_compile_fail_four.rs:27:59
    |
-26 |     let (_cloned_secret, returned_value) = _cloned_secret.expose_secret(|exposed_secret| {
+27 |     let (_cloned_secret, returned_value) = _cloned_secret.expose_secret(|exposed_secret| {
    |                                                           ^^^^^^^^^^^^^ expected `B1`, found `B0`
    |
-note: required by a bound in `expose_secret`
+note: required by a bound in `sosecrets_rs::traits::ExposeSecret::Next`
   --> src/traits.rs
    |
-   |     fn expose_secret<ReturnType, ClosureType>(self, scope: ClosureType) -> (Self::Next, ReturnType)
-   |        ------------- required by a bound in this associated function
+   |     type Next: ExposeSecret<'max, T, MEC, Sum<EC, U1>>
+   |          ---- required by a bound in this associated type
 ...
-   |         EC: Add<U1> + IsLess<MEC, Output = True>,
-   |                                   ^^^^^^^^^^^^^ required by this bound in `ExposeSecret::expose_secret`
+   |         Sum<EC, U1>: Unsigned + IsLessOrEqual<MEC, Output = True> + Add<U1>;
+   |                                                    ^^^^^^^^^^^^^ required by this bound in `ExposeSecret::Next`
