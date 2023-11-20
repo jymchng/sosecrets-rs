@@ -7,8 +7,11 @@ error[E0271]: type mismatch resolving `<UInt<UInt<UInt<UInt<UInt<UInt<UInt<UTerm
 note: required by a bound in `Secret`
  --> src/secret.rs
   |
-  | pub struct Secret<T: Zeroize, MEC: Unsigned, EC: Add<U1> + IsLessOrEqual<MEC, Output = True> + Unsigned = U0>(
-  |                                                                               ^^^^^^^^^^^^^ required by this bound in `Secret`
+  | pub struct Secret<
+  |            ------ required by a bound in this struct
+...
+  |     EC: Add<U1> + IsLessOrEqual<MEC, Output = True> + Unsigned = U0,
+  |                                      ^^^^^^^^^^^^^ required by this bound in `Secret`
 
 error[E0308]: mismatched types
  --> trybuild_tests/test_compile_fail_three.rs:7:47
