@@ -12,7 +12,7 @@ repository = "https://github.com/jymchng/sosecrets-rs"
 
 [dependencies]
 typenum = "1.17.0"
-zeroize = { version = "1.6.0" }
+zeroize = { version = "1.6.0", features = ["derive"] }
 
 [dev-dependencies]
 trybuild = "1.0.85"

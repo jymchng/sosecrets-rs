@@ -1,6 +1,7 @@
 use core::{
     marker::PhantomData,
-    ops::{Add, Deref},
+    mem::ManuallyDrop,
+    ops::{Add, Deref, Drop},
 };
 
 use crate::traits::{CloneableSecret, ExposeSecret};
@@ -13,11 +14,10 @@ use zeroize::Zeroize;
 
 pub type AddU1<A> = <A as core::ops::Add<U1>>::Output;
 
-pub struct Secret<
-    T: Zeroize,
-    MEC: Unsigned,
-    EC: core::ops::Add<typenum::U1> + typenum::IsLess<MEC> + Unsigned = U0,
->(T, PhantomData<(MEC, EC)>);
+pub struct Secret<T: Zeroize, MEC: Unsigned, EC: Add<U1> + IsLess<MEC> + Unsigned = U0>(
+    ManuallyDrop<T>,
+    PhantomData<(MEC, EC)>,
+);
 
 pub struct ExposedSecret<'brand, T>(T, PhantomData<fn(&'brand ()) -> &'brand ()>);
 
@@ -27,7 +27,7 @@ where
 {
     #[inline(always)]
     pub const fn new(value: T) -> Self {
-        Self(value, PhantomData)
+        Self(ManuallyDrop::new(value), PhantomData)
     }
 }
 
@@ -46,7 +46,7 @@ impl<'max, T: Zeroize, MEC: Unsigned, EC: Add<U1> + Unsigned + IsLess<MEC>>
 
     #[inline(always)]
     fn expose_secret<ReturnType, ClosureType>(
-        self,
+        mut self,
         scope: ClosureType,
     ) -> (Secret<T, MEC, AddU1<EC>>, ReturnType)
     where
@@ -55,7 +55,18 @@ impl<'max, T: Zeroize, MEC: Unsigned, EC: Add<U1> + Unsigned + IsLess<MEC>>
         for<'brand> ClosureType: FnOnce(ExposedSecret<'brand, &'brand T>) -> ReturnType,
     {
         let returned_value = scope(ExposedSecret(&self.0, PhantomData));
-        (Secret(self.0, PhantomData), returned_value)
+        (
+            Secret(
+                // SAFETY: Since compile error prevents constructing a `Secret` with `EC` > `MEC`,
+                // `zeroize()` is only called when `Secret` is maximally exposed
+                // and it is not possible to call `expose_secret(...)`
+                // when `Secret` is maximally exposed to access **private** `self.0` field,
+                // therefore, this is safe.
+                ManuallyDrop::new(unsafe { ManuallyDrop::take(&mut self.0) }),
+                PhantomData,
+            ),
+            returned_value,
+        )
     }
 }
 
@@ -76,5 +87,23 @@ impl<T> Deref for ExposedSecret<'_, &'_ T> {
     #[inline(always)]
     fn deref(&self) -> &T {
         self.0
+    }
+}
+
+impl<T, MEC, EC> Drop for Secret<T, MEC, EC>
+where
+    T: Zeroize,
+    MEC: Unsigned,
+    EC: Add<U1> + Unsigned + IsLess<MEC>,
+{
+    fn drop(&mut self) {
+        if EC::to_u64() == MEC::to_u64() {
+            // SAFETY: Since compile error prevents constructing a `Secret` with `EC` > `MEC`,
+            // `zeroize()` is only called when `Secret` is maximally exposed
+            // and it is not possible to call `expose_secret(...)`
+            // when `Secret` is maximally exposed to access **private** `self.0` field,
+            // therefore, this is safe.
+            (unsafe { ManuallyDrop::take(&mut self.0) }).zeroize();
+        }
     }
 }

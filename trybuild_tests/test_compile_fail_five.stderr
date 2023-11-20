@@ -1,0 +1,20 @@
+error[E0382]: use of moved value: `cloned_secret`
+  --> trybuild_tests/test_compile_fail_five.rs:22:44
+   |
+16 |       let cloned_secret = new_secret.clone_secret();
+   |           ------------- move occurs because `cloned_secret` has type `sosecrets_rs::prelude::Secret<i32, UInt<UInt<UTerm, B1>, B0>, UInt<UTerm, B1>>`, which does not implement the `Copy` trait
+17 |       let (_cloned_secret, returned_value) = cloned_secret.expose_secret(|exposed_secret| {
+   |  __________________________________________________________-
+18 | |         let returned_value = UseSecret::new(*exposed_secret);
+19 | |         returned_value
+20 | |     });
+   | |______- `cloned_secret` moved due to this method call
+21 |       assert_eq!(69, returned_value.inner);
+22 |       let (_cloned_secret, returned_value) = cloned_secret.expose_secret(|exposed_secret| {
+   |                                              ^^^^^^^^^^^^^ value used here after move
+   |
+note: `expose_secret` takes ownership of the receiver `self`, which moves `cloned_secret`
+  --> src/traits.rs
+   |
+   |     fn expose_secret<ReturnType, ClosureType>(self, scope: ClosureType) -> (Self::Next, ReturnType)
+   |                                               ^^^^
