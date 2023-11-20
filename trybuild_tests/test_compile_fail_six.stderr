@@ -1,0 +1,17 @@
+error[E0382]: use of moved value: `new_secret`
+  --> trybuild_tests/test_compile_fail_six.rs:14:41
+   |
+9  |     let new_secret: Secret<_, U2> = Secret::new(69);
+   |         ---------- move occurs because `new_secret` has type `sosecrets_rs::prelude::Secret<i32, UInt<UInt<UTerm, B1>, B0>>`, which does not implement the `Copy` trait
+10 |
+11 |     let got_out_inner_value = new_secret.into_inner();
+   |                                          ------------ `new_secret` moved due to this method call
+...
+14 |     let (_new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
+   |                                         ^^^^^^^^^^ value used here after move
+   |
+note: `into_inner` takes ownership of the receiver `self`, which moves `new_secret`
+  --> src/traits.rs
+   |
+   |     fn into_inner(self) -> T;
+   |                   ^^^^
