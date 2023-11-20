@@ -1,18 +1,18 @@
-use crate::secret::{AddU1, ExposedSecret, Secret};
-use typenum::{consts::U1, Bit, IsLess, True, Unsigned};
-use zeroize::Zeroize;
+use typenum::{consts::U1, IsLess, Sum, True, Unsigned};
 
-pub trait ExposeSecret<
-    T: Zeroize,
-    MEC: Unsigned,
-    EC: core::ops::Add<typenum::U1> + Unsigned + typenum::IsLess<MEC>,
->
-{
-    fn expose_secret<ReturnType>(
-        self,
-        scope: impl FnOnce(ExposedSecret<T, MEC, EC>) -> (ExposedSecret<T, MEC, EC>, ReturnType),
-    ) -> (Secret<T, MEC, AddU1<EC>>, ReturnType)
+pub trait ExposeSecret<'max, T, MEC: Unsigned, EC: Unsigned>: Sized {
+    type Exposed<'brand>
     where
-        AddU1<EC>: core::ops::Add<typenum::U1> + Unsigned + typenum::IsLess<MEC>,
-        EC: IsLess<MEC, Output = True>;
+        'max: 'brand;
+
+    type Next: ExposeSecret<'max, T, MEC, Sum<EC, U1>>
+    where
+        EC: core::ops::Add<U1> + Unsigned + typenum::IsLess<MEC>,
+        Sum<EC, U1>: Unsigned + IsLess<MEC> + core::ops::Add<typenum::U1>;
+
+    fn expose_secret<ReturnType, ClosureType>(self, scope: ClosureType) -> (Self::Next, ReturnType)
+    where
+        for<'brand> ClosureType: FnOnce(Self::Exposed<'brand>) -> ReturnType,
+        EC: core::ops::Add<U1> + IsLess<MEC, Output = True>,
+        Sum<EC, U1>: Unsigned + core::ops::Add<U1> + IsLess<MEC>;
 }

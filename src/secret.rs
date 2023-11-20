@@ -1,10 +1,12 @@
+use std::marker::PhantomData;
+
 use crate::traits::ExposeSecret;
 use typenum::{
     consts::{U0, U1},
     type_operators::IsLess,
-    Bit, IsGreater, Same, True, Unsigned, B0, B1,
+    Sum, True, Unsigned,
 };
-use zeroize::Zeroize;
+use zeroize::{DefaultIsZeroes, Zeroize};
 
 pub type AddU1<A> = <A as core::ops::Add<U1>>::Output;
 
@@ -12,18 +14,9 @@ pub struct Secret<
     T: Zeroize,
     MEC: Unsigned,
     EC: core::ops::Add<typenum::U1> + typenum::IsLess<MEC> + Unsigned = U0,
->(
-    T,
-    core::marker::PhantomData<MEC>,
-    core::marker::PhantomData<EC>,
-);
+>(T, core::marker::PhantomData<(MEC, EC)>);
 
-pub struct ExposedSecret<'brand, T: Zeroize, MEC: Unsigned, EC: Unsigned>(
-    T,
-    ::core::marker::PhantomData<fn(&'brand ()) -> &'brand ()>,
-    ::core::marker::PhantomData<MEC>,
-    ::core::marker::PhantomData<EC>,
-);
+pub struct ExposedSecret<'brand, T>(T, ::core::marker::PhantomData<fn(&'brand ()) -> &'brand ()>);
 
 impl<T: Zeroize, MEC: Unsigned> Secret<T, MEC, U0>
 where
@@ -31,44 +24,48 @@ where
 {
     #[inline(always)]
     pub fn new(value: T) -> Self {
-        Self(value, <_>::default(), <_>::default())
+        Self(value, PhantomData)
     }
 }
 
 impl<
+        'max,
         T: Zeroize,
         MEC: Unsigned,
         EC: core::ops::Add<typenum::U1> + Unsigned + typenum::IsLess<MEC>,
-    > ExposeSecret<T, MEC, EC> for Secret<T, MEC, EC>
+    > ExposeSecret<'max, &'max T, MEC, EC> for Secret<T, MEC, EC>
 {
+    type Exposed<'brand> = ExposedSecret<'brand, &'brand T>
+    where
+        'max: 'brand;
+
+    type Next = Secret<T, MEC, Sum<EC, U1>>
+    where
+        EC: core::ops::Add<U1> + Unsigned + typenum::IsLess<MEC>,
+        Sum<EC, U1>: Unsigned + IsLess<MEC> + core::ops::Add<typenum::U1>,
+        T: Zeroize;
+
     #[inline(always)]
-    fn expose_secret<ReturnType>(
+    fn expose_secret<ReturnType, ClosureType>(
         self,
-        scope: impl FnOnce(ExposedSecret<'_, T, MEC, EC>) -> (ExposedSecret<'_, T, MEC, EC>, ReturnType),
+        scope: ClosureType,
     ) -> (Secret<T, MEC, AddU1<EC>>, ReturnType)
     where
         AddU1<EC>: core::ops::Add<typenum::U1> + Unsigned + typenum::IsLess<MEC>,
         EC: IsLess<MEC, Output = True>,
+        for<'brand> ClosureType: FnOnce(ExposedSecret<'brand, &'brand T>) -> ReturnType,
     {
-        let (witness, returned_value) = scope(ExposedSecret(
-            self.0,
-            <_>::default(),
-            <_>::default(),
-            <_>::default(),
-        ));
-        (
-            Secret(witness.0, <_>::default(), <_>::default()),
-            returned_value,
-        )
+        let returned_value = scope(ExposedSecret(&self.0, PhantomData));
+        (Secret(self.0, PhantomData), returned_value)
     }
 }
 
-impl<T: Zeroize, MEC: Unsigned, EC: Unsigned> ::core::ops::Deref for ExposedSecret<'_, T, MEC, EC> {
+impl<T: Zeroize + DefaultIsZeroes> ::core::ops::Deref for ExposedSecret<'_, &'_ T> {
     type Target = T;
 
     #[inline(always)]
     fn deref(&self) -> &T {
-        &self.0
+        self.0
     }
 }
 
