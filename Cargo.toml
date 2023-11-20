@@ -7,12 +7,13 @@ rust-version = "1.70"
 readme = "README.md"
 license-file = "LICENSE"
 repository = "https://github.com/jymchng/sosecrets-rs"
+description = "A simple `Secret` wrapper type that reveals the secret at most `N: usize` times with compile time guarantee."
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 typenum = "1.17.0"
-zeroize = { version = "1.6.0", features = ["derive"] }
+zeroize = { version = "1.6.0" }
 
 [dev-dependencies]
 trybuild = "1.0.85"

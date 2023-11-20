@@ -87,7 +87,7 @@ fn test_clone_secret_1() {
 
 #[test]
 fn test_destruct_secret_1() {
-    use sosecrets_rs::traits::{CloneableSecret, SecretIntoInner};
+    use sosecrets_rs::traits::SecretIntoInner;
 
     let new_secret: Secret<_, U2> = Secret::new(69);
 

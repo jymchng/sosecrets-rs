@@ -6,7 +6,7 @@
   <img alt="msrv" src="https://img.shields.io/badge/msrv-1.70.0-blue"/>
 </div>
 
-Aims to be a crate for Secrets Management in Rust.
+A simple `Secret` wrapper type that reveals the secret at most `N: usize` times with compile time guarantee.
 
 # Minimum Supported Rust version
 
