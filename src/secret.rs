@@ -78,19 +78,3 @@ impl<T> Deref for ExposedSecret<'_, &'_ T> {
         self.0
     }
 }
-
-#[cfg(test)]
-mod tests {
-
-    use super::*;
-    use typenum::consts::U2;
-    #[derive(Debug)]
-    struct UseSecret<T> {
-        inner: T,
-    }
-    impl<T> UseSecret<T> {
-        fn new(value: T) -> Self {
-            Self { inner: value }
-        }
-    }
-}
