@@ -55,7 +55,6 @@ impl<
     ) -> (Secret<T, MEC, AddU1<EC>>, ReturnType)
     where
         AddU1<EC>: Add<U1> + Unsigned + IsLessOrEqual<MEC, Output = True>,
-        EC: IsLessOrEqual<MEC, Output = True>,
         for<'brand> ClosureType: FnOnce(ExposedSecret<'brand, &'brand T>) -> ReturnType,
     {
         let returned_value = scope(ExposedSecret(&self.0, PhantomData));
@@ -112,6 +111,11 @@ where
 {
     #[inline(always)]
     fn into_inner(mut self) -> T {
+        // SAFETY: Since compile error prevents constructing a `Secret` with `EC` > `MEC`,
+        // `zeroize()` is only called when `Secret` is maximally exposed
+        // and it is not possible to call `expose_secret(...)`
+        // when `Secret` is maximally exposed to access **private** `self.0` field,
+        // therefore, this is safe.
         unsafe { ManuallyDrop::take(&mut self.0) }
     }
 }
