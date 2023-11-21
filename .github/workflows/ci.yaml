@@ -6,7 +6,7 @@ on:
       - master
 
 jobs:
-  clippy:
+  clippy_solo:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -18,7 +18,7 @@ jobs:
       - name: Run tests
         run: cargo clippy --all-features && cargo clippy
 
-  tests:
+  tests_solo:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -30,7 +30,7 @@ jobs:
       - name: Run tests
         run: cargo test --all-features --no-fail-fast && cargo test
 
-  msrv:
+  msrv_solo:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -41,3 +41,39 @@ jobs:
 
       - name: Check tests
         run: cargo test --all-features --no-run && cargo test
+
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Run tests
+        run: bash scripts/tests-all-features.sh
+
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Run tests
+        run: bash scripts/check-all-features.sh
+
+  clippy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Run tests
+        run: bash scripts/clippy-all-features.sh
