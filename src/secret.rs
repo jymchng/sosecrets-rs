@@ -4,9 +4,12 @@ use core::{
     ops::{Add, Deref, Drop},
 };
 
-use crate::traits::{CloneableSecret, ExposeSecret, SecretIntoInner};
+use crate::traits::{ExposeSecret, SecretIntoInner};
 use typenum::{IsLessOrEqual, Sum, True, Unsigned, U0, U1};
 use zeroize::Zeroize;
+
+#[cfg(feature = "cloneable-secret")]
+use crate::traits::CloneableSecret;
 
 pub type AddU1<A> = <A as core::ops::Add<U1>>::Output;
 
@@ -71,17 +74,6 @@ impl<
     }
 }
 
-impl<T, MEC, EC> CloneableSecret<T, MEC, EC> for Secret<T, MEC, EC>
-where
-    T: Clone + Zeroize,
-    MEC: Unsigned,
-    EC: Unsigned + Add<U1> + IsLessOrEqual<MEC, Output = True>,
-{
-    fn clone_secret(&self) -> Self {
-        Self(self.0.clone(), PhantomData)
-    }
-}
-
 impl<T> Deref for ExposedSecret<'_, &'_ T> {
     type Target = T;
 
@@ -97,6 +89,7 @@ where
     MEC: Unsigned,
     EC: Add<U1> + Unsigned + IsLessOrEqual<MEC, Output = True>,
 {
+    #[inline(always)]
     fn drop(&mut self) {
         if EC::to_u64() == MEC::to_u64() {
             // SAFETY: Since compile error prevents constructing a `Secret` with `EC` > `MEC`,
@@ -117,7 +110,21 @@ where
     MEC: Unsigned,
     EC: Unsigned + Add<U1> + IsLessOrEqual<MEC, Output = True>,
 {
+    #[inline(always)]
     fn into_inner(mut self) -> T {
         unsafe { ManuallyDrop::take(&mut self.0) }
+    }
+}
+
+#[cfg(feature = "cloneable-secret")]
+impl<T, MEC, EC> Clone for Secret<T, MEC, EC>
+where
+    T: CloneableSecret + Zeroize,
+    MEC: Unsigned,
+    EC: Unsigned + Add<U1> + IsLessOrEqual<MEC, Output = True>,
+{
+    #[inline(always)]
+    fn clone(&self) -> Self {
+        Self(self.0.clone(), PhantomData)
     }
 }

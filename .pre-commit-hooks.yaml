@@ -23,7 +23,7 @@
 - id: cargo-test
   name: cargo test
   description: cargo test
-  entry: cargo test
+  entry: cargo test --all-features --no-fail-fast && cargo test
   language: system
   types: [rust]
   pass_filenames: false

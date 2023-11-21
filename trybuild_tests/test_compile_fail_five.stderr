@@ -1,20 +1,26 @@
-error[E0382]: use of moved value: `cloned_secret`
-  --> trybuild_tests/test_compile_fail_five.rs:22:44
+error[E0599]: the method `clone` exists for struct `Secret<A, UInt<UInt<UTerm, B1>, B0>>`, but its trait bounds were not satisfied
+  --> trybuild_tests/test_compile_fail_five.rs:17:36
    |
-16 |       let cloned_secret = new_secret.clone_secret();
-   |           ------------- move occurs because `cloned_secret` has type `sosecrets_rs::prelude::Secret<i32, UInt<UInt<UTerm, B1>, B0>, UInt<UTerm, B1>>`, which does not implement the `Copy` trait
-17 |       let (_cloned_secret, returned_value) = cloned_secret.expose_secret(|exposed_secret| {
-   |  __________________________________________________________-
-18 | |         let returned_value = UseSecret::new(*exposed_secret);
-19 | |         returned_value
-20 | |     });
-   | |______- `cloned_secret` moved due to this method call
-21 |       assert_eq!(69, returned_value.inner);
-22 |       let (_cloned_secret, returned_value) = cloned_secret.expose_secret(|exposed_secret| {
-   |                                              ^^^^^^^^^^^^^ value used here after move
+7  |       struct A {
+   |       -------- doesn't satisfy `A: CloneableSecret`
+...
+17 |       let cloned_secret = new_secret.clone();
+   |                                      ^^^^^ method cannot be called on `Secret<A, UInt<UInt<UTerm, B1>, B0>>` due to unsatisfied trait bounds
    |
-note: `expose_secret` takes ownership of the receiver `self`, which moves `cloned_secret`
+  ::: src/secret.rs
+   |
+   | / pub struct Secret<
+   | |     T: Zeroize,
+   | |     MEC: Unsigned,
+   | |     EC: Add<U1> + IsLessOrEqual<MEC, Output = True> + Unsigned = U0,
+   | | >(ManuallyDrop<T>, PhantomData<(MEC, EC)>);
+   | |_- doesn't satisfy `_: Clone`
+   |
+   = note: the following trait bounds were not satisfied:
+           `A: CloneableSecret`
+           which is required by `sosecrets_rs::prelude::Secret<A, UInt<UInt<UTerm, B1>, B0>>: Clone`
+note: the trait `CloneableSecret` must be implemented
   --> src/traits.rs
    |
-   |     fn expose_secret<ReturnType, ClosureType>(self, scope: ClosureType) -> (Self::Next, ReturnType)
-   |                                               ^^^^
+   |     pub trait CloneableSecret: Clone + Zeroize {}
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

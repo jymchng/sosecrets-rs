@@ -65,10 +65,9 @@ fn test_expose_secret_2() {
     assert_eq!(69, returned_value.inner);
 }
 
+#[cfg(feature = "cloneable-secret")]
 #[test]
-fn test_clone_secret_1() {
-    use sosecrets_rs::traits::CloneableSecret;
-
+fn test_clone_1() {
     let new_secret: Secret<_, U2> = Secret::new(69);
 
     let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
@@ -77,7 +76,7 @@ fn test_clone_secret_1() {
     });
     assert_eq!(69, returned_value.inner);
 
-    let cloned_secret = new_secret.clone_secret();
+    let cloned_secret = new_secret.clone();
     let (_cloned_secret, returned_value) = cloned_secret.expose_secret(|exposed_secret| {
         let returned_value = UseSecret::new(*exposed_secret);
         returned_value

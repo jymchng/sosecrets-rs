@@ -1,6 +1,7 @@
 mod common;
 fn main() {
     use sosecrets_rs::prelude::*;
+    use sosecrets_rs::traits::CloneableSecret;
     use typenum::consts::U2;
     use zeroize::Zeroize;
 
@@ -13,6 +14,14 @@ fn main() {
         }
     }
     let new_secret: Secret<_, U2> = Secret::new(A { inner: 69 });
+    impl Clone for A {
+        fn clone(&self) -> Self {
+            Self {
+                inner: self.inner.clone(),
+            }
+        }
+    }
+    impl CloneableSecret for A {}
 
-    let cloned_secret = new_secret.clone();
+    let _cloned_secret = new_secret.clone();
 }

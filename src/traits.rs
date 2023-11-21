@@ -19,15 +19,6 @@ pub trait ExposeSecret<'max, T, MEC: Unsigned, EC: Unsigned>: Sized {
         Sum<EC, U1>: Unsigned + Add<U1> + IsLessOrEqual<MEC, Output = True>;
 }
 
-pub trait CloneableSecret<
-    T: Clone,
-    MEC: Unsigned,
-    EC: Unsigned + IsLessOrEqual<MEC, Output = True> + Add<U1>,
->: Sized
-{
-    fn clone_secret(&self) -> Self;
-}
-
 pub trait SecretIntoInner<T, MEC, EC>: Sized
 where
     T: Zeroize,
@@ -35,4 +26,23 @@ where
     EC: Unsigned + Add<U1> + IsLessOrEqual<MEC, Output = True>,
 {
     fn into_inner(self) -> T;
+}
+
+#[cfg(feature = "cloneable-secret")]
+pub use self::cloneable_secret::CloneableSecret;
+
+#[cfg(feature = "cloneable-secret")]
+mod cloneable_secret {
+
+    use core::clone::Clone;
+    use zeroize::Zeroize;
+
+    pub trait CloneableSecret: Clone + Zeroize {}
+
+    impl<T: Clone + Zeroize, const N: usize> CloneableSecret for [T; N] {}
+    impl CloneableSecret for String {}
+    impl<T: CloneableSecret + Zeroize> CloneableSecret for Vec<T> {}
+    crate::impl_cloneable_secret_for_numbers!(
+        i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize, f32, f64
+    );
 }

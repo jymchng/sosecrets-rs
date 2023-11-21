@@ -1,4 +1,6 @@
+mod macros;
 mod secret;
+
 pub mod traits;
 
 pub mod prelude {

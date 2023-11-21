@@ -15,3 +15,7 @@ note: `into_inner` takes ownership of the receiver `self`, which moves `new_secr
    |
    |     fn into_inner(self) -> T;
    |                   ^^^^
+help: you can `clone` the value and consume it, but this might not be your desired behavior
+   |
+11 |     let got_out_inner_value = new_secret.clone().into_inner();
+   |                                          ++++++++
