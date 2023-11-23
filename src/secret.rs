@@ -98,7 +98,6 @@ where
             // therefore, this is safe.
             let mut inner = unsafe { ManuallyDrop::take(&mut self.0) };
             inner.zeroize();
-            drop(inner);
         }
     }
 }
