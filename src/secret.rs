@@ -11,7 +11,7 @@ use zeroize::Zeroize;
 #[cfg(feature = "cloneable-secret")]
 use crate::traits::CloneableSecret;
 
-pub type AddU1<A> = <A as core::ops::Add<U1>>::Output;
+type AddU1<A> = <A as core::ops::Add<U1>>::Output;
 
 pub struct Secret<
     T: Zeroize,
