@@ -14,10 +14,58 @@ fn test_expose_secret_extern() {
     assert_eq!(returned_value.inner, "MySecret".to_owned());
 }
 
+#[test]
+fn test_expose_secret_with_wrapper() {
+    use typenum::U50;
+    use zeroize::Zeroize;
+
+    #[derive(Clone, Debug, PartialEq)]
+    struct SecretString(String);
+
+    impl Zeroize for SecretString {
+        fn zeroize(&mut self) {
+            self.0.zeroize();
+        }
+    }
+
+    let secret = SecretString("MySecret".to_owned());
+    let new_secret: Secret<_, U50, _> = Secret::new(secret);
+    let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
+        let returned_value = UseSecret::new((*exposed_secret).to_owned());
+        returned_value
+    });
+    assert_eq!(returned_value.inner, SecretString("MySecret".to_owned()));
+
+    let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
+        let returned_value = UseSecret::new((*exposed_secret).to_owned());
+        returned_value
+    });
+    assert_eq!(returned_value.inner, SecretString("MySecret".to_owned()));
+
+    let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
+        let returned_value = UseSecret::new((*exposed_secret).to_owned());
+        returned_value
+    });
+    assert_eq!(returned_value.inner, SecretString("MySecret".to_owned()));
+
+    let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
+        let returned_value = UseSecret::new((*exposed_secret).to_owned());
+        returned_value
+    });
+    assert_eq!(returned_value.inner, SecretString("MySecret".to_owned()));
+
+    let (_new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
+        let returned_value = UseSecret::new((*exposed_secret).to_owned());
+        returned_value
+    });
+    assert_eq!(returned_value.inner, SecretString("MySecret".to_owned()));
+}
+
 // #[test]
 // fn test_expose_secret_in_a_loop() {
 //     use common::{self, UseSecret};
 //     use sosecrets_rs::traits::ExposeSecret;
+//     use typenum::U50;
 
 //     let secret = "MySecret".to_owned();
 //     let new_secret: Secret<_, U50, _> = Secret::new(secret);
