@@ -90,7 +90,7 @@ where
 {
     #[inline(always)]
     fn drop(&mut self) {
-        if EC::to_u64() == MEC::to_u64() {
+        if EC::U64 == MEC::U64 {
             // SAFETY: Since compile error prevents constructing a `Secret` with `EC` > `MEC`,
             // `zeroize()` is only called when `Secret` is maximally exposed
             // and it is not possible to call `expose_secret(...)`
