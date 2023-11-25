@@ -41,7 +41,7 @@ mod cloneable_secret {
 
     impl<T: Clone + Zeroize, const N: usize> CloneableSecret for [T; N] {}
     impl CloneableSecret for String {}
-    impl<T: CloneableSecret + Zeroize> CloneableSecret for Vec<T> {}
+    impl<T: Clone + Zeroize> CloneableSecret for Vec<T> {}
     crate::impl_cloneable_secret_for_numbers!(
         i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize, f32, f64
     );
