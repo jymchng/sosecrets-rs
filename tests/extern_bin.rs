@@ -339,9 +339,38 @@ fn test_scoped_concurrency_the_other_way_round() {
 
     let (_new_secret, _) = new_secret.expose_secret(|exposed_secret| {
         scope(|s| {
-            let scope_handler = s.spawn(move || exposed_secret.clone());
+            let scope_handler = s.spawn(move || *exposed_secret);
             let result = scope_handler.join();
             assert_eq!(result.unwrap(), 69);
         });
     });
+}
+
+// #[test]
+// fn test_unscoped_concurrency_the_other_way_round() {
+//     use std::thread::spawn;
+
+//     let new_secret = Secret::<i32, U2>::new_with(|| 69);
+
+//     let (_new_secret, _) = new_secret.expose_secret(|exposed_secret| {
+//         let join_handler = spawn(move || assert_eq!(69, *exposed_secret)); // this thread has 'static lifetime
+//         join_handler.join();
+//     });
+// }
+
+#[test]
+fn test_panic() {
+    use core::panic::AssertUnwindSafe;
+    use std::panic::catch_unwind;
+
+    let new_secret = Secret::<i32, U2>::new_with(|| 69);
+
+    let mut opt: Option<i32> = None;
+    let _ = catch_unwind(AssertUnwindSafe(|| {
+        new_secret.expose_secret(|exposed_secret| {
+            let _ = opt.insert(*exposed_secret);
+            panic!();
+        });
+    }));
+    assert_eq!(opt.unwrap(), 69);
 }
