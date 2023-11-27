@@ -303,3 +303,45 @@ fn test_with_new_alloc() {
         SecretString(env::var("CARGO_TARGET_DIR").unwrap_or("MySecret".to_string()))
     );
 }
+
+#[test]
+fn test_scoped_concurrency() {
+    use std::thread::scope;
+
+    let new_secret = Secret::<i32, U2>::new_with(|| 69);
+    let new_secret_two = Secret::<String, U2>::new_with(|| "69".to_owned());
+
+    scope(|s| {
+        s.spawn(move || {
+            let (new_secret, returned_value) =
+                new_secret.expose_secret(|exposed_secret| *exposed_secret);
+            assert_eq!(69, returned_value);
+            let (_new_secret, returned_value) =
+                new_secret.expose_secret(|exposed_secret| *exposed_secret);
+            assert_eq!(69, returned_value);
+        });
+        s.spawn(move || {
+            let (new_secret_two, returned_value) =
+                new_secret_two.expose_secret(|exposed_secret| exposed_secret.to_owned());
+            assert_eq!("69".to_owned(), returned_value);
+            let (_new_secret_two, returned_value) =
+                new_secret_two.expose_secret(|exposed_secret| exposed_secret.to_owned());
+            assert_eq!("69".to_owned(), returned_value);
+        });
+    });
+}
+
+#[test]
+fn test_scoped_concurrency_the_other_way_round() {
+    use std::thread::scope;
+
+    let new_secret = Secret::<i32, U2>::new_with(|| 69);
+
+    let (_new_secret, _) = new_secret.expose_secret(|exposed_secret| {
+        scope(|s| {
+            let scope_handler = s.spawn(move || exposed_secret.clone());
+            let result = scope_handler.join();
+            assert_eq!(result.unwrap(), 69);
+        });
+    });
+}
