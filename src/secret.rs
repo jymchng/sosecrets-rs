@@ -4,7 +4,7 @@ use core::{
     ops::{Add, Deref, Drop},
 };
 
-use crate::traits::{ExposeSecret, SecretIntoInner};
+use crate::traits::ExposeSecret;
 use typenum::{IsLessOrEqual, Sum, True, Unsigned, U0, U1};
 use zeroize::Zeroize;
 
@@ -28,6 +28,13 @@ where
     #[inline(always)]
     pub const fn new(value: T) -> Self {
         Self(ManuallyDrop::new(value), PhantomData)
+    }
+
+    pub fn new_with<ClosureType>(closure: ClosureType) -> Self
+    where
+        ClosureType: FnOnce() -> T,
+    {
+        Self(ManuallyDrop::new(closure()), PhantomData)
     }
 }
 
@@ -93,23 +100,6 @@ where
         // therefore, this is safe.
         let mut inner = unsafe { ManuallyDrop::take(&mut self.0) };
         inner.zeroize();
-    }
-}
-
-impl<T, MEC, EC> SecretIntoInner<T, MEC, EC> for Secret<T, MEC, EC>
-where
-    T: Zeroize,
-    MEC: Unsigned,
-    EC: Unsigned + Add<U1> + IsLessOrEqual<MEC, Output = True>,
-{
-    #[inline(always)]
-    fn into_inner(mut self) -> T {
-        // SAFETY: Since compile error prevents constructing a `Secret` with `EC` > `MEC`,
-        // `zeroize()` is only called when `Secret` is maximally exposed
-        // and it is not possible to call `expose_secret(...)`
-        // when `Secret` is maximally exposed to access **private** `self.0` field,
-        // therefore, this is safe.
-        unsafe { ManuallyDrop::take(&mut self.0) }
     }
 }
 

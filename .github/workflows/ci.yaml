@@ -6,30 +6,6 @@ on:
       - master
 
 jobs:
-  clippy_solo:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install stable toolchain
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Run tests
-        run: cargo clippy --all-features && cargo clippy
-
-  tests_solo:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install stable toolchain
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Run tests
-        run: cargo test --all-features --no-fail-fast && cargo test
-
   msrv_solo:
     runs-on: ubuntu-latest
     steps:
