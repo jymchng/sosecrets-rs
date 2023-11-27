@@ -15,6 +15,7 @@ fn test_expose_secret_extern() {
 }
 
 #[cfg(feature = "cloneable-secret")]
+#[cfg(feature = "alloc")]
 #[test]
 fn test_secret_with_vec_and_clone() {
     let secret_vec = vec!["MySecret".to_string()];
@@ -152,11 +153,153 @@ fn test_clone_1() {
 }
 
 #[test]
-fn test_destruct_secret_1() {
-    use sosecrets_rs::traits::SecretIntoInner;
+fn test_with_new() {
+    use std::env;
+    use zeroize::Zeroize;
 
-    let new_secret: Secret<_, U2> = Secret::new(69);
+    #[derive(Clone, Debug, PartialEq)]
+    struct SecretString(String);
 
-    let got_out_inner_value = new_secret.into_inner();
-    assert_eq!(got_out_inner_value, 69);
+    impl Zeroize for SecretString {
+        fn zeroize(&mut self) {
+            self.0.zeroize();
+        }
+    }
+
+    let new_secret: Secret<SecretString, U5> = Secret::new_with(|| {
+        SecretString(
+            env::var("CARGO_TARGET_DIR")
+                .unwrap_or("MySecret".to_string())
+                .to_string(),
+        )
+    });
+
+    let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
+        let returned_value = UseSecret::new((*exposed_secret).to_owned());
+        returned_value
+    });
+    assert_eq!(
+        returned_value.inner,
+        SecretString(env::var("CARGO_TARGET_DIR").unwrap_or("MySecret".to_string()))
+    );
+
+    let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
+        let returned_value = UseSecret::new((*exposed_secret).to_owned());
+        returned_value
+    });
+    assert_eq!(
+        returned_value.inner,
+        SecretString(env::var("CARGO_TARGET_DIR").unwrap_or("MySecret".to_string()))
+    );
+
+    let (_new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
+        let returned_value = UseSecret::new((*exposed_secret).to_owned());
+        returned_value
+    });
+    assert_eq!(
+        returned_value.inner,
+        SecretString(env::var("CARGO_TARGET_DIR").unwrap_or("MySecret".to_string()))
+    );
+}
+
+#[cfg(feature = "cloneable-secret")]
+#[test]
+fn test_with_new_cloneable_secret() {
+    use std::env;
+    use zeroize::Zeroize;
+
+    #[derive(Clone, Debug, PartialEq)]
+    struct SecretString(String);
+
+    impl Zeroize for SecretString {
+        fn zeroize(&mut self) {
+            self.0.zeroize();
+        }
+    }
+
+    let new_secret: Secret<SecretString, U5> = Secret::new_with(|| {
+        SecretString(
+            env::var("CARGO_TARGET_DIR")
+                .unwrap_or("MySecret".to_string())
+                .to_string(),
+        )
+    });
+
+    let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
+        let returned_value = UseSecret::new((*exposed_secret).to_owned());
+        returned_value
+    });
+    assert_eq!(
+        returned_value.inner,
+        SecretString(env::var("CARGO_TARGET_DIR").unwrap_or("MySecret".to_string()))
+    );
+
+    let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
+        let returned_value = UseSecret::new((*exposed_secret).to_owned());
+        returned_value
+    });
+    assert_eq!(
+        returned_value.inner,
+        SecretString(env::var("CARGO_TARGET_DIR").unwrap_or("MySecret".to_string()))
+    );
+
+    let (_new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
+        let returned_value = UseSecret::new((*exposed_secret).to_owned());
+        returned_value
+    });
+    assert_eq!(
+        returned_value.inner,
+        SecretString(env::var("CARGO_TARGET_DIR").unwrap_or("MySecret".to_string()))
+    );
+}
+
+#[cfg(feature = "alloc")]
+#[test]
+fn test_with_new_alloc() {
+    use std::env;
+    use zeroize::Zeroize;
+
+    #[derive(Clone, Debug, PartialEq)]
+    struct SecretString(String);
+
+    impl Zeroize for SecretString {
+        fn zeroize(&mut self) {
+            self.0.zeroize();
+        }
+    }
+
+    let new_secret: Secret<SecretString, U5> = Secret::new_with(|| {
+        SecretString(
+            env::var("CARGO_TARGET_DIR")
+                .unwrap_or("MySecret".to_string())
+                .to_string(),
+        )
+    });
+
+    let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
+        let returned_value = UseSecret::new((*exposed_secret).to_owned());
+        returned_value
+    });
+    assert_eq!(
+        returned_value.inner,
+        SecretString(env::var("CARGO_TARGET_DIR").unwrap_or("MySecret".to_string()))
+    );
+
+    let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
+        let returned_value = UseSecret::new((*exposed_secret).to_owned());
+        returned_value
+    });
+    assert_eq!(
+        returned_value.inner,
+        SecretString(env::var("CARGO_TARGET_DIR").unwrap_or("MySecret".to_string()))
+    );
+
+    let (_new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
+        let returned_value = UseSecret::new((*exposed_secret).to_owned());
+        returned_value
+    });
+    assert_eq!(
+        returned_value.inner,
+        SecretString(env::var("CARGO_TARGET_DIR").unwrap_or("MySecret".to_string()))
+    );
 }

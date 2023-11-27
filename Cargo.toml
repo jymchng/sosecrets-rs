@@ -20,3 +20,8 @@ trybuild = "1.0.85"
 
 [features]
 cloneable-secret = []
+alloc = ["zeroize/alloc"]
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--generate-link-to-definition", "--cfg", "docsrs"]
