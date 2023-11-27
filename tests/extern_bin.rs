@@ -339,7 +339,7 @@ fn test_scoped_concurrency_the_other_way_round() {
 
     let (_new_secret, _) = new_secret.expose_secret(|exposed_secret| {
         scope(|s| {
-            let scope_handler = s.spawn(move || exposed_secret.clone());
+            let scope_handler = s.spawn(move || *exposed_secret);
             let result = scope_handler.join();
             assert_eq!(result.unwrap(), 69);
         });
@@ -353,7 +353,7 @@ fn test_scoped_concurrency_the_other_way_round() {
 //     let new_secret = Secret::<i32, U2>::new_with(|| 69);
 
 //     let (_new_secret, _) = new_secret.expose_secret(|exposed_secret| {
-//         let join_handler = spawn(move || assert_eq!(69, *exposed_secret));
+//         let join_handler = spawn(move || assert_eq!(69, *exposed_secret)); // this thread has 'static lifetime
 //         join_handler.join();
 //     });
 // }
