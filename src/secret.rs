@@ -106,7 +106,7 @@ where
 #[cfg(feature = "cloneable-secret")]
 impl<T, MEC, EC> Clone for Secret<T, MEC, EC>
 where
-    T: CloneableSecret + Zeroize,
+    T: CloneableSecret,
     MEC: Unsigned,
     EC: Unsigned + Add<U1> + IsLessOrEqual<MEC, Output = True>,
 {
