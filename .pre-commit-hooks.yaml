@@ -21,9 +21,9 @@
   types: [rust]
   pass_filenames: false
 - id: cargo-test
-  name: cargo test
+  name: cargo-test
   description: cargo test
-  entry: cargo test --all-features --no-fail-fast && cargo test
+  entry: bash scripts/tests-all-features.sh
   language: system
   types: [rust]
   pass_filenames: false

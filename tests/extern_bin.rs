@@ -305,7 +305,7 @@ fn test_with_new_alloc() {
 }
 
 #[test]
-fn test_scoped_concurrency() {
+fn test_scoped_threads() {
     use std::thread::scope;
 
     let new_secret = Secret::<i32, U2>::new_with(|| 69);
