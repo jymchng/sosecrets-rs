@@ -30,6 +30,7 @@ where
         Self(ManuallyDrop::new(value), PhantomData)
     }
 
+    #[inline(always)]
     pub fn new_with<ClosureType>(closure: ClosureType) -> Self
     where
         ClosureType: FnOnce() -> T,
