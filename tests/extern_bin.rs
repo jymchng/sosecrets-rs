@@ -37,11 +37,13 @@ fn test_secret_with_vec_and_clone() {
 #[test]
 fn test_expose_secret_with_wrapper() {
     use typenum::U50;
+    #[cfg(feature = "zeroize")]
     use zeroize::Zeroize;
 
     #[derive(Clone, Debug, PartialEq)]
     struct SecretString(String);
 
+    #[cfg(feature = "zeroize")]
     impl Zeroize for SecretString {
         fn zeroize(&mut self) {
             self.0.zeroize();
@@ -155,11 +157,13 @@ fn test_clone_1() {
 #[test]
 fn test_with_new() {
     use std::env;
+    #[cfg(feature = "zeroize")]
     use zeroize::Zeroize;
 
     #[derive(Clone, Debug, PartialEq)]
     struct SecretString(String);
 
+    #[cfg(feature = "zeroize")]
     impl Zeroize for SecretString {
         fn zeroize(&mut self) {
             self.0.zeroize();
@@ -206,11 +210,13 @@ fn test_with_new() {
 #[test]
 fn test_with_new_cloneable_secret() {
     use std::env;
+    #[cfg(feature = "zeroize")]
     use zeroize::Zeroize;
 
     #[derive(Clone, Debug, PartialEq)]
     struct SecretString(String);
 
+    #[cfg(feature = "zeroize")]
     impl Zeroize for SecretString {
         fn zeroize(&mut self) {
             self.0.zeroize();

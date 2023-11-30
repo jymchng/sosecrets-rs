@@ -6,6 +6,8 @@ use core::{
 
 use crate::traits::ExposeSecret;
 use typenum::{IsLessOrEqual, Sum, True, Unsigned, U0, U1};
+
+#[cfg(feature = "zeroize")]
 use zeroize::Zeroize;
 
 #[cfg(feature = "cloneable-secret")]
@@ -14,14 +16,16 @@ use crate::traits::CloneableSecret;
 type AddU1<A> = <A as core::ops::Add<U1>>::Output;
 
 pub struct Secret<
-    T: Zeroize,
+    #[cfg(feature = "zeroize")] T: Zeroize,
+    #[cfg(not(feature = "zeroize"))] T,
     MEC: Unsigned,
     EC: Add<U1> + IsLessOrEqual<MEC, Output = True> + Unsigned = U0,
 >(ManuallyDrop<T>, PhantomData<(MEC, EC)>);
 
 pub struct ExposedSecret<'brand, T>(T, PhantomData<fn(&'brand ()) -> &'brand ()>);
 
-impl<T: Zeroize, MEC: Unsigned> Secret<T, MEC, U0>
+impl<#[cfg(feature = "zeroize")] T: Zeroize, #[cfg(not(feature = "zeroize"))] T, MEC: Unsigned>
+    Secret<T, MEC, U0>
 where
     U0: IsLessOrEqual<MEC, Output = True>,
 {
@@ -41,7 +45,8 @@ where
 
 impl<
         'max,
-        T: Zeroize,
+        #[cfg(feature = "zeroize")] T: Zeroize,
+        #[cfg(not(feature = "zeroize"))] T,
         MEC: Unsigned,
         EC: Add<U1> + Unsigned + IsLessOrEqual<MEC, Output = True>,
     > ExposeSecret<'max, &'max T, MEC, EC> for Secret<T, MEC, EC>
@@ -53,8 +58,7 @@ impl<
     type Next = Secret<T, MEC, Sum<EC, U1>>
     where
         EC: Add<U1> + Unsigned + IsLessOrEqual<MEC, Output = True>,
-        Sum<EC, U1>: Unsigned + IsLessOrEqual<MEC, Output = True> + Add<U1>,
-        T: Zeroize;
+        Sum<EC, U1>: Unsigned + IsLessOrEqual<MEC, Output = True> + Add<U1>;
 
     #[inline(always)]
     fn expose_secret<ReturnType, ClosureType>(
@@ -86,9 +90,9 @@ impl<T> Deref for ExposedSecret<'_, &'_ T> {
     }
 }
 
-impl<T, MEC, EC> Drop for Secret<T, MEC, EC>
+impl<#[cfg(feature = "zeroize")] T: Zeroize, #[cfg(not(feature = "zeroize"))] T, MEC, EC> Drop
+    for Secret<T, MEC, EC>
 where
-    T: Zeroize,
     MEC: Unsigned,
     EC: Add<U1> + Unsigned + IsLessOrEqual<MEC, Output = True>,
 {
@@ -99,8 +103,9 @@ where
         // and it is not possible to call `expose_secret(...)`
         // when `Secret` is maximally exposed to access **private** `self.0` field,
         // therefore, this is safe.
-        let mut inner = unsafe { ManuallyDrop::take(&mut self.0) };
-        inner.zeroize();
+        let mut _inner = unsafe { ManuallyDrop::take(&mut self.0) };
+        #[cfg(feature = "zeroize")]
+        _inner.zeroize();
     }
 }
 

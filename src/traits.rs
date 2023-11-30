@@ -25,11 +25,23 @@ pub use self::cloneable_secret::CloneableSecret;
 mod cloneable_secret {
 
     use core::clone::Clone;
+
+    #[cfg(feature = "zeroize")]
     use zeroize::Zeroize;
 
+    #[cfg(feature = "zeroize")]
     pub trait CloneableSecret: Clone + Zeroize {}
 
-    impl<T: Clone + Zeroize, const N: usize> CloneableSecret for [T; N] {}
+    #[cfg(not(feature = "zeroize"))]
+    pub trait CloneableSecret: Clone {}
+
+    impl<
+            #[cfg(feature = "zeroize")] T: Clone + Zeroize,
+            #[cfg(not(feature = "zeroize"))] T: Clone,
+            const N: usize,
+        > CloneableSecret for [T; N]
+    {
+    }
 
     #[cfg(feature = "alloc")]
     use alloc::{string::String, vec::Vec};
@@ -38,7 +50,12 @@ mod cloneable_secret {
     impl CloneableSecret for String {}
 
     #[cfg(feature = "alloc")]
-    impl<T: Clone + Zeroize> CloneableSecret for Vec<T> {}
+    impl<
+            #[cfg(feature = "zeroize")] T: Clone + Zeroize,
+            #[cfg(not(feature = "zeroize"))] T: Clone,
+        > CloneableSecret for Vec<T>
+    {
+    }
 
     crate::impl_cloneable_secret_for_numbers!(
         i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize, f32, f64
