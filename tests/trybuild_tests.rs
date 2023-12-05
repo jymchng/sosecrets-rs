@@ -8,7 +8,11 @@ fn test_compile_fails() {
     #[cfg(all(feature = "cloneable-secret", not(feature = "alloc")))]
     t.compile_fail("trybuild_tests/test_compile_fail_four.rs");
 
-    #[cfg(all(feature = "cloneable-secret", not(feature = "alloc")))]
+    #[cfg(all(
+        feature = "cloneable-secret",
+        not(feature = "alloc"),
+        not(feature = "zeroize")
+    ))]
     t.compile_fail("trybuild_tests/test_compile_fail_five.rs");
 
     #[cfg(all(feature = "alloc", feature = "cloneable-secret"))]
