@@ -2,6 +2,7 @@ use sosecrets_rs::{prelude::*, traits::ExposeSecret};
 use typenum::consts::{U2, U5};
 mod common;
 use common::UseSecret;
+use core::fmt::Write;
 
 #[test]
 fn test_expose_secret_extern() {
@@ -338,7 +339,7 @@ fn test_scoped_threads() {
 }
 
 #[test]
-fn test_scoped_concurrency_the_other_way_round() {
+fn test_scoped_threads_the_other_way_round() {
     use std::thread::scope;
 
     let new_secret = Secret::<i32, U2>::new_with(|| 69);
@@ -379,4 +380,65 @@ fn test_panic() {
         });
     }));
     assert_eq!(opt.unwrap(), 69);
+}
+
+struct Comparator<'a> {
+    valid: bool,
+    to_compare: &'a str,
+}
+
+impl<'a> Comparator<'a> {
+    fn new(s: &'a str) -> Self {
+        Self {
+            valid: true,
+            to_compare: s,
+        }
+    }
+
+    fn is_valid(self) -> bool {
+        self.valid && self.to_compare.is_empty()
+    }
+}
+
+impl<'a> Write for Comparator<'a> {
+    fn write_str(&mut self, s: &str) -> Result<(), core::fmt::Error> {
+        if s.eq(self.to_compare) {
+            self.valid = self.valid && true;
+            self.to_compare = "";
+            return Ok(());
+        }
+
+        if self.to_compare.starts_with(s) && self.to_compare.len() >= s.len() {
+            self.to_compare = &self.to_compare[s.len()..];
+        } else {
+            self.valid = false
+        }
+        Ok(())
+    }
+}
+
+#[test]
+#[cfg(feature = "debug-secret")]
+fn test_debug_secret_one() {
+    use sosecrets_rs::traits::DebugSecret;
+
+    struct A {
+        inner: i32,
+    }
+
+    impl DebugSecret for i32 {};
+
+    let a = A { inner: 69 };
+
+    let mut cmp = Comparator::new(
+        "struct A
+        {
+            inner: 69,
+        }
+    ",
+    );
+
+    let new_secret: Secret<A, U5> = Secret::new(a);
+    let _ = write!(&mut cmp, "{}", B {});
+    assert!(cmp.is_valid());
 }
