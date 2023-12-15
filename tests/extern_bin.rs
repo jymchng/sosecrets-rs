@@ -426,7 +426,7 @@ fn test_debug_secret_one() {
         inner: i32,
     }
 
-    impl DebugSecret for i32 {};
+    impl DebugSecret for A {}
 
     let a = A { inner: 69 };
 
@@ -439,6 +439,6 @@ fn test_debug_secret_one() {
     );
 
     let new_secret: Secret<A, U5> = Secret::new(a);
-    let _ = write!(&mut cmp, "{}", B {});
+    let _ = write!(&mut cmp, "{}", A {});
     assert!(cmp.is_valid());
 }
