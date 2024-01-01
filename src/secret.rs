@@ -13,6 +13,9 @@ use zeroize::Zeroize;
 #[cfg(feature = "cloneable-secret")]
 use crate::traits::CloneableSecret;
 
+#[cfg(feature = "debug-secret")]
+use crate::traits::DebugSecret;
+
 type AddU1<A> = <A as core::ops::Add<U1>>::Output;
 
 pub struct Secret<
@@ -119,5 +122,20 @@ where
     #[inline(always)]
     fn clone(&self) -> Self {
         Self(self.0.clone(), PhantomData)
+    }
+}
+
+#[cfg(feature = "debug-secret")]
+impl<T, MEC, EC> core::fmt::Debug for Secret<T, MEC, EC>
+where
+    T: DebugSecret,
+    MEC: Unsigned,
+    EC: Unsigned + Add<U1> + IsLessOrEqual<MEC, Output = True>,
+{
+    #[inline(always)]
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.write_str("Secret<")?;
+        T::debug_secret(f)?;
+        f.write_str(">")
     }
 }
