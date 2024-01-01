@@ -1,3 +1,13 @@
+//! # `sosecrets-rs`
+//! `sosecret-rs` is a Rust crate providing a Secret type for managing secret values with exposure control.
+//! It aims to enhance security by allowing controlled exposure of sensitive information.
+//! 
+//! # Features
+//! Exposure Control: Secret values can only be exposed a limited number of times, preventing unintentional information leaks. This is guaranteed at compile time.
+//! Zeroization: If configured with the zeroize feature, secrets are zeroized upon reaching their maximum exposure count.
+//! Cloneable Secrets: With the cloneable-secret feature, Secret values can be cloned if the underlying type implements the CloneableSecret trait.
+//! Debugging Secrets: The debug-secret feature enables the debugging of Secret values if the underlying type implements the DebugSecret trait.
+
 use core::{
     marker::PhantomData,
     mem::{forget, ManuallyDrop},
