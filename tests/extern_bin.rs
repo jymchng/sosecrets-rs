@@ -2,6 +2,7 @@ use sosecrets_rs::{prelude::*, traits::ExposeSecret};
 use typenum::consts::{U2, U5};
 mod common;
 use common::UseSecret;
+#[cfg(feature = "debug-secret")]
 use core::fmt::Write;
 
 #[test]
@@ -382,11 +383,13 @@ fn test_panic() {
     assert_eq!(opt.unwrap(), 69);
 }
 
+#[cfg(feature = "debug-secret")]
 struct Comparator<'a> {
     valid: bool,
     to_compare: &'a str,
 }
 
+#[cfg(feature = "debug-secret")]
 impl<'a> Comparator<'a> {
     fn new(s: &'a str) -> Self {
         Self {
@@ -400,6 +403,7 @@ impl<'a> Comparator<'a> {
     }
 }
 
+#[cfg(feature = "debug-secret")]
 impl<'a> Write for Comparator<'a> {
     fn write_str(&mut self, s: &str) -> Result<(), core::fmt::Error> {
         if s.eq(self.to_compare) {
@@ -421,24 +425,28 @@ impl<'a> Write for Comparator<'a> {
 #[cfg(feature = "debug-secret")]
 fn test_debug_secret_one() {
     use sosecrets_rs::traits::DebugSecret;
+    #[cfg(feature = "zeroize")]
+    use zeroize::Zeroize;
 
+    #[derive(Debug, Clone)]
     struct A {
-        inner: i32,
+        _inner: i32,
+    }
+
+    #[cfg(feature = "zeroize")]
+    impl Zeroize for A {
+        fn zeroize(&mut self) {
+            self._inner.zeroize()
+        }
     }
 
     impl DebugSecret for A {}
 
-    let a = A { inner: 69 };
+    let a = A { _inner: 69 };
 
-    let mut cmp = Comparator::new(
-        "struct A
-        {
-            inner: 69,
-        }
-    ",
-    );
+    let mut cmp = Comparator::new("Secret<[REDACTED]>");
 
-    let new_secret: Secret<A, U5> = Secret::new(a);
-    let _ = write!(&mut cmp, "{}", A {});
+    let new_secret: Secret<A, U5> = Secret::new(a.clone());
+    let _ = write!(&mut cmp, "{:?}", new_secret);
     assert!(cmp.is_valid());
 }
