@@ -22,6 +22,7 @@ trybuild = "1.0.85"
 cloneable-secret = []
 alloc = ["zeroize/alloc"]
 zeroize = ["dep:zeroize"]
+debug-secret = []
 
 [package.metadata.docs.rs]
 all-features = true
