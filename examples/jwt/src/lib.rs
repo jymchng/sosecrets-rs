@@ -23,7 +23,7 @@ struct Custom {
 pub fn new_token(
     user_id: &str,
     secret_password: Secret<String, U1, U0>,
-) -> Result<String, Box<dyn Error>> {
+) -> Result<Secret<String, U1, U0>, Box<dyn Error>> {
     let header: Header = Default::default();
     let claims = Custom {
         sub: user_id.into(),
@@ -58,9 +58,9 @@ pub fn new_token(
         let signed_token = unsigned_token
             .sign_with_key(&key)
             .map_err(|_e| "Sign error")?;
-        Ok(signed_token.into())
+        Ok::<std::string::String, Box<dyn Error>>(signed_token.into())
     });
-    signed_token
+    Ok::<Secret<String, U1, U0>, Box<dyn Error>>(Secret::new(signed_token?))
 }
 
 pub fn login(token: &str) -> Result<String, Box<dyn Error>> {
