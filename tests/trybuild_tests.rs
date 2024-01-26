@@ -26,6 +26,13 @@ fn test_compile_fails() {
     #[cfg(all(feature = "alloc", not(feature = "cloneable-secret")))]
     t.compile_fail("trybuild_tests/test_compile_fail_eight.rs");
 
+    #[cfg(all(
+        feature = "cloneable-secret",
+        not(feature = "alloc"),
+        feature = "zeroize"
+    ))]
+    t.compile_fail("trybuild_tests/test_compile_fail_nine.rs");
+
     #[cfg(feature = "cloneable-secret")]
     t.pass("trybuild_tests/test_compile_pass_one.rs");
 
