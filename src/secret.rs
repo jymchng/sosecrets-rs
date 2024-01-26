@@ -5,6 +5,7 @@ use core::{
 };
 
 use crate::traits::ExposeSecret;
+pub use typenum;
 use typenum::{IsLessOrEqual, Sum, True, Unsigned, U0, U1};
 
 #[cfg(feature = "zeroize")]

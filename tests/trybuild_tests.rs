@@ -8,7 +8,7 @@ fn test_compile_fails() {
     #[cfg(all(feature = "cloneable-secret", not(feature = "alloc")))]
     t.compile_fail("trybuild_tests/test_compile_fail_four.rs");
 
-    #[cfg(all(feature = "cloneable-secret", not(feature = "alloc")))]
+    #[cfg(all(feature = "cloneable-secret", not(feature = "alloc"), not(feature = "zeroize")))]
     t.compile_fail("trybuild_tests/test_compile_fail_five.rs");
 
     #[cfg(all(feature = "alloc", feature = "cloneable-secret"))]
@@ -21,6 +21,9 @@ fn test_compile_fails() {
     // no_std env + alloc + extern crate alloc::vec::Vec in main()
     #[cfg(all(feature = "alloc", not(feature = "cloneable-secret")))]
     t.compile_fail("trybuild_tests/test_compile_fail_eight.rs");
+
+    #[cfg(all(feature = "cloneable-secret", not(feature = "alloc"), feature = "zeroize"))]
+    t.compile_fail("trybuild_tests/test_compile_fail_nine.rs");
 
     #[cfg(feature = "cloneable-secret")]
     t.pass("trybuild_tests/test_compile_pass_one.rs");

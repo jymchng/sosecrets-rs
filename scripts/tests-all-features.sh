@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Array of feature names
-features=("cloneable-secret", "alloc")
+features=("cloneable-secret", "alloc", "zeroize")
 
 # Calculate the total number of features
 total_features=${#features[@]}
