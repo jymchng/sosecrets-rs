@@ -8,7 +8,7 @@ readme = "README.md"
 license-file = "LICENSE"
 repository = "https://github.com/jymchng/sosecrets-rs"
 description = "A simple `Secret` wrapper type that reveals the secret at most `MEC: typenum::Unsigned` times with compile time guarantees."
-keywords = ["Security", "Secrets", "Exposure Control", "Non-linear Types", "Metaprogramming"]
+keywords = ["security", "secrets", "exposure-control", "non-linear-types", "metaprogramming"]
 categories = ["config", "no-std::no-alloc", "rust-patterns"]
 exclude = [
     "tests/*",
