@@ -10,6 +10,14 @@ repository = "https://github.com/jymchng/sosecrets-rs"
 description = "A simple `Secret` wrapper type that reveals the secret at most `MEC: typenum::Unsigned` times with compile time guarantees."
 keywords = ["Security", "Secrets", "Exposure Control", "Non-linear Types", "Metaprogramming"]
 categories = ["config", "no-std::no-alloc", "rust-patterns"]
+exclude = [
+    "tests/*",
+    "trybuild_tests/*",
+    "scripts/*",
+    ".pre-*.yaml",
+    ".github/*",
+    ".gitignore"
+]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
