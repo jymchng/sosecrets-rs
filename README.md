@@ -8,6 +8,8 @@
 
 A simple `Secret` wrapper type that reveals the secret at most `N: usize` times with compile time guarantee.
 
+# TODO, add more stuff here!
+
 # Minimum Supported Rust version
 
 The crate currently requires Rust 1.70. I have no intent of increasing the

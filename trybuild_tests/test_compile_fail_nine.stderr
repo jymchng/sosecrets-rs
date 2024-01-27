@@ -1,10 +1,10 @@
 error[E0599]: the method `clone` exists for struct `Secret<A, UInt<UInt<UTerm, B1>, B0>>`, but its trait bounds were not satisfied
-  --> trybuild_tests/test_compile_fail_five.rs:12:36
+  --> trybuild_tests/test_compile_fail_nine.rs:20:36
    |
-6  |       struct A {
+8  |       struct A {
    |       -------- doesn't satisfy `A: CloneableSecret`
 ...
-12 |       let cloned_secret = new_secret.clone();
+20 |       let cloned_secret = new_secret.clone();
    |                                      ^^^^^ method cannot be called on `Secret<A, UInt<UInt<UTerm, B1>, B0>>` due to unsatisfied trait bounds
    |
   ::: src/secret.rs
@@ -23,5 +23,5 @@ error[E0599]: the method `clone` exists for struct `Secret<A, UInt<UInt<UTerm, B
 note: the trait `CloneableSecret` must be implemented
   --> src/traits.rs
    |
-   |     pub trait CloneableSecret: Clone {}
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |     pub trait CloneableSecret: Clone + Zeroize {}
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
