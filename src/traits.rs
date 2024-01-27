@@ -91,7 +91,7 @@ mod cloneable_secret {
     {
     }
 
-    crate::impl_cloneable_secret_for_numbers!(
+    crate::macros::impl_cloneable_secret_for_numbers!(
         i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize, f32, f64
     );
 }
@@ -149,7 +149,7 @@ mod debug_secret {
     {
     }
 
-    crate::impl_debug_secret_for_numbers!(
+    crate::macros::impl_debug_secret_for_numbers!(
         i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize, f32, f64
     );
 }
