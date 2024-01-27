@@ -10,7 +10,7 @@ name = "lib"
 path = "./src/lib.rs"
 
 [dependencies]
-sosecrets-rs = { path = "../../"}
+sosecrets-rs = { git = "https://github.com/jymchng/sosecrets-rs/", features = ["debug-secret"]}
 base64 = "0.13"
 crypto-common = "0.1"
 digest = "0.10"

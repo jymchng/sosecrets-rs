@@ -212,6 +212,7 @@ dependencies = [
 [[package]]
 name = "sosecrets-rs"
 version = "0.1.0"
+source = "git+https://github.com/jymchng/sosecrets-rs/#ac2d27ab779c71e67d28f3e7b4a9c5bd29c11fd0"
 dependencies = [
  "typenum",
 ]
