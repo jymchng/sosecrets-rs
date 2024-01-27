@@ -1,7 +1,7 @@
 //! # `sosecrets-rs`
 //! `sosecret-rs` is a Rust crate providing a Secret type for managing secret values with exposure control.
 //! It aims to enhance security by allowing controlled exposure of sensitive information.
-//! 
+//!
 //! # Features
 //! Exposure Control: Secret values can only be exposed a limited number of times, preventing unintentional information leaks. This is guaranteed at compile time.
 //! Zeroization: If configured with the zeroize feature, secrets are zeroized upon reaching their maximum exposure count.
@@ -29,6 +29,21 @@ use crate::traits::DebugSecret;
 
 type AddU1<A> = <A as core::ops::Add<U1>>::Output;
 
+/// The `Secret` struct represents a secure container for managing sensitive values with built-in exposure control.
+///
+/// It provides a mechanism to limit the number of times a secret can be exposed.
+/// The behavior of the `Secret` type is customizable through various features, such as zeroization, cloning support, and debugging capabilities.
+///
+/// ## Type Parameters
+/// - `T`: The underlying type of the secret.
+/// - `MEC`: Maximum Exposure Count, a type-level unsigned integer, with `typenum::Unsigned` bound, indicating the maximum allowed exposures for the secret.
+/// - `EC`: Exposure Count, a type-level unsigned integer, with `typenum::Unsigned` bound, representing the current exposure count of the secret.
+/// It is limited by the Maximum Exposure Count, if `EC` is greater than `MEC`, the program cannot be compiled.
+///
+/// ## Features
+/// - `zeroize` (optional): If enabled, the secret will be automatically zeroized (cleared) after reaching its maximum exposure count.
+/// - `cloneable-secret` (optional): If enabled, the underlying type `T` must implement the `sosecrets_rs::traits::CloneableSecret` trait, allowing the secret to be cloned.
+/// - `debug-secret` (optional): If enabled, the underlying type `T` must implement the `sosecrets_rs::traits::DebugSecret` trait, enabling debugging of the secret.
 pub struct Secret<
     #[cfg(feature = "zeroize")] T: Zeroize,
     #[cfg(not(feature = "zeroize"))] T,
@@ -36,6 +51,7 @@ pub struct Secret<
     EC: Add<U1> + IsLessOrEqual<MEC, Output = True> + Unsigned = U0,
 >(ManuallyDrop<T>, PhantomData<(MEC, EC)>);
 
+/// Type representing an exposed secret value. It holds an annotated (`'brand`) [invariant](https://doc.rust-lang.org/nomicon/subtyping.html#variance) lifetime.
 pub struct ExposedSecret<'brand, T>(T, PhantomData<fn(&'brand ()) -> &'brand ()>);
 
 impl<#[cfg(feature = "zeroize")] T: Zeroize, #[cfg(not(feature = "zeroize"))] T, MEC: Unsigned>
@@ -43,11 +59,43 @@ impl<#[cfg(feature = "zeroize")] T: Zeroize, #[cfg(not(feature = "zeroize"))] T,
 where
     U0: IsLessOrEqual<MEC, Output = True>,
 {
+    /// Creates a new `Secret` instance with the specified value.
+    ///
+    /// # Parameters
+    /// - `value`: The initial value to be stored in the secret.
+    ///
+    /// # Returns
+    /// A new `Secret` instance initialized with the provided value.
+    ///
+    /// # Examples
+    /// ```rust
+    /// use sosecrets_rs::prelude::*;
+    /// use typenum::U5;
+    ///
+    /// // Create a new secret with a maximum exposure count of 5
+    /// let secret = Secret::<_, U5>::new("my_secret_value".to_string());
+    /// ```
     #[inline(always)]
     pub const fn new(value: T) -> Self {
         Self(ManuallyDrop::new(value), PhantomData)
     }
 
+    /// Creates a new `Secret` instance by generating the value with a closure.
+    ///
+    /// # Parameters
+    /// - `closure`: A closure that generates the initial value to be stored in the secret.
+    ///
+    /// # Returns
+    /// A new `Secret` instance initialized with the value produced by the closure.
+    ///
+    /// # Examples
+    /// ```rust
+    /// use sosecrets_rs::prelude::*;
+    /// use typenum::U3;
+    ///
+    /// // Create a new secret with a maximum exposure count of 3 using a closure
+    /// let secret = Secret::<_, U3>::new_with(|| "generated_secret_value".to_string());
+    /// ```
     #[inline(always)]
     pub fn new_with<ClosureType>(closure: ClosureType) -> Self
     where
@@ -85,7 +133,6 @@ impl<
     {
         let returned_value = scope(ExposedSecret(&self.0, PhantomData));
         // SAFETY: Since compile error prevents constructing a `Secret` with `EC` > `MEC`,
-        // `zeroize()` is only called when `Secret` is maximally exposed
         // and it is not possible to call `expose_secret(...)`
         // when `Secret` is maximally exposed to access **private** `self.0` field,
         // therefore, this is safe.
@@ -113,7 +160,6 @@ where
     #[inline(always)]
     fn drop(&mut self) {
         // SAFETY: Since compile error prevents constructing a `Secret` with `EC` > `MEC`,
-        // `zeroize()` is only called when `Secret` is maximally exposed
         // and it is not possible to call `expose_secret(...)`
         // when `Secret` is maximally exposed to access **private** `self.0` field,
         // therefore, this is safe.

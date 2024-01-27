@@ -1,3 +1,4 @@
+#[doc(hidden)]
 #[macro_export]
 macro_rules! impl_cloneable_secret_for_numbers {
     ($($t:ty),*) => {
@@ -7,6 +8,7 @@ macro_rules! impl_cloneable_secret_for_numbers {
     };
 }
 
+#[doc(hidden)]
 #[macro_export]
 macro_rules! impl_debug_secret_for_numbers {
     ($($t:ty),*) => {
