@@ -5,7 +5,7 @@
   <a href="https://docs.rs/sosecrets-rs"><img alt="docs.rs" src="https://img.shields.io/crates/v/sosecrets-rs?color=blue&label=docs&style=for-the-badge" height="23"></a>
 </div>
 
-Rust’s Secrets Management crate with
+Secrets Management crate with
 
 1. type level and compile-time guarantees and
 2. each references corresponding to each secrets can only be exposed or revealed under a lexical scope with an invariant lifetime and
