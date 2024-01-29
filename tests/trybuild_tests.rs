@@ -33,9 +33,18 @@ fn test_compile_fails() {
     ))]
     t.compile_fail("trybuild_tests/test_compile_fail_nine.rs");
 
+    #[cfg(all(
+        feature = "cloneable-secret",
+        feature = "alloc",
+        not(feature = "zeroize")
+    ))]
+    t.compile_fail("trybuild_tests/test_compile_fail_ten.rs");
+
     #[cfg(feature = "cloneable-secret")]
     t.pass("trybuild_tests/test_compile_pass_one.rs");
 
     // no_std env + no alloc + no cloneable-secret should work
     t.pass("trybuild_tests/test_compile_pass_two.rs");
+
+    t.pass("trybuild_tests/test_compile_pass_three.rs");
 }

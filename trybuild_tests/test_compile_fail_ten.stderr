@@ -1,0 +1,23 @@
+error[E0597]: `a_struct` does not live long enough
+  --> trybuild_tests/test_compile_fail_ten.rs:22:45
+   |
+20 |       let a_struct = AStruct { _inner: 69 };
+   |           -------- binding `a_struct` declared here
+21 |
+22 |       let secret_astruct = make_return_secret(&a_struct);
+   |                                               ^^^^^^^^^ borrowed value does not live long enough
+...
+26 |       let (_, _) = secret_astruct.expose_secret(|exposed_secret| {
+   |  __________________-
+27 | |         ref_wrapper._inner.insert(*exposed_secret);
+28 | |     });
+   | |______- argument requires that `a_struct` is borrowed for `'static`
+...
+31 |   }
+   |   - `a_struct` dropped here while still borrowed
+   |
+note: due to current limitations in the borrow checker, this implies a `'static` lifetime
+  --> src/traits.rs
+   |
+   |         for<'brand> ClosureType: FnOnce(Self::Exposed<'brand>) -> ReturnType,
+   |                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
