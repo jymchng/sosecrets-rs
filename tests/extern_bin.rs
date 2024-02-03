@@ -468,3 +468,71 @@ fn test_bounds() {
 
     check_send_sync::<Secret<i32, U2>>();
 }
+
+#[test]
+fn test_never_exposed_fully_but_dropped() {
+    use core::sync::atomic::{AtomicUsize, Ordering};
+    use sosecrets_rs::traits::ExposeSecret;
+    #[cfg(feature = "zeroize")]
+    use zeroize::Zeroize;
+
+    #[cfg(feature = "zeroize")]
+    impl Zeroize for DetectDrop {
+        fn zeroize(&mut self) {}
+    }
+
+    static NUM_DROPS: AtomicUsize = AtomicUsize::new(0);
+
+    struct DetectDrop;
+
+    impl Drop for DetectDrop {
+        fn drop(&mut self) {
+            NUM_DROPS.fetch_add(1, Ordering::Relaxed);
+        }
+    }
+
+    let secret = Secret::<DetectDrop, U5>::new(DetectDrop);
+
+    {
+        let (next_secret, _) = secret.expose_secret(|_exposed_secret| {});
+        assert_eq!(NUM_DROPS.load(Ordering::Relaxed), 0usize);
+        let (next_secret, _) = next_secret.expose_secret(|_exposed_secret| {});
+        assert_eq!(NUM_DROPS.load(Ordering::Relaxed), 0usize);
+        let (_, _) = next_secret.expose_secret(|_exposed_secret| {});
+        assert_eq!(NUM_DROPS.load(Ordering::Relaxed), 1usize);
+    }
+
+    assert_eq!(NUM_DROPS.load(Ordering::Relaxed), 1usize);
+}
+
+#[test]
+fn test_exposed_fully_but_dropped() {
+    use core::sync::atomic::{AtomicUsize, Ordering};
+    #[cfg(feature = "zeroize")]
+    use zeroize::Zeroize;
+
+    #[cfg(feature = "zeroize")]
+    impl Zeroize for DetectDrop {
+        fn zeroize(&mut self) {}
+    }
+
+    static NUM_DROPS: AtomicUsize = AtomicUsize::new(0);
+    struct DetectDrop;
+
+    impl Drop for DetectDrop {
+        fn drop(&mut self) {
+            NUM_DROPS.fetch_add(1, Ordering::Relaxed);
+        }
+    }
+
+    let secret = Secret::<DetectDrop, U2>::new(DetectDrop);
+
+    {
+        let (next_secret, _) = secret.expose_secret(|_exposed_secret| {});
+        assert_eq!(NUM_DROPS.load(Ordering::Relaxed), 0usize);
+        let (_, _) = next_secret.expose_secret(|_exposed_secret| {});
+        assert_eq!(NUM_DROPS.load(Ordering::Relaxed), 1usize);
+    }
+
+    assert_eq!(NUM_DROPS.load(Ordering::Relaxed), 1usize);
+}
