@@ -450,3 +450,21 @@ fn test_debug_secret_one() {
     let _ = write!(&mut cmp, "{:?}", new_secret);
     assert!(cmp.is_valid());
 }
+
+#[test]
+fn test_bounds() {
+    use core::marker::PhantomData;
+    fn check_unpin<T: Unpin>() {}
+    // This has to take a value, since the async fn's return type is unnameable.
+    fn check_send_sync_val<T: Send + Sync>(_t: T) {}
+    fn check_send_sync<T: Send + Sync>() {}
+    check_unpin::<Secret<i32, U2>>();
+    check_unpin::<ExposedSecret<'_, PhantomData<fn(&()) -> &()>>>();
+
+    let secret = Secret::<i32, U5>::new(69);
+    check_send_sync_val(secret);
+    let secret = Secret::<i32, U5>::new(69);
+    check_send_sync_val(secret.expose_secret(|_| {}));
+
+    check_send_sync::<Secret<i32, U2>>();
+}
