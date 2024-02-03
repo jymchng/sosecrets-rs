@@ -450,3 +450,89 @@ fn test_debug_secret_one() {
     let _ = write!(&mut cmp, "{:?}", new_secret);
     assert!(cmp.is_valid());
 }
+
+#[test]
+fn test_bounds() {
+    use core::marker::PhantomData;
+    fn check_unpin<T: Unpin>() {}
+    // This has to take a value, since the async fn's return type is unnameable.
+    fn check_send_sync_val<T: Send + Sync>(_t: T) {}
+    fn check_send_sync<T: Send + Sync>() {}
+    check_unpin::<Secret<i32, U2>>();
+    check_unpin::<ExposedSecret<'_, PhantomData<fn(&()) -> &()>>>();
+
+    let secret = Secret::<i32, U5>::new(69);
+    check_send_sync_val(secret);
+    let secret = Secret::<i32, U5>::new(69);
+    check_send_sync_val(secret.expose_secret(|_| {}));
+
+    check_send_sync::<Secret<i32, U2>>();
+}
+
+#[test]
+fn test_never_exposed_fully_but_dropped() {
+    use core::sync::atomic::{AtomicUsize, Ordering};
+    use sosecrets_rs::traits::ExposeSecret;
+    #[cfg(feature = "zeroize")]
+    use zeroize::Zeroize;
+
+    #[cfg(feature = "zeroize")]
+    impl Zeroize for DetectDrop {
+        fn zeroize(&mut self) {}
+    }
+
+    static NUM_DROPS: AtomicUsize = AtomicUsize::new(0);
+
+    struct DetectDrop;
+
+    impl Drop for DetectDrop {
+        fn drop(&mut self) {
+            NUM_DROPS.fetch_add(1, Ordering::Relaxed);
+        }
+    }
+
+    let secret = Secret::<DetectDrop, U5>::new(DetectDrop);
+
+    {
+        let (next_secret, _) = secret.expose_secret(|_exposed_secret| {});
+        assert_eq!(NUM_DROPS.load(Ordering::Relaxed), 0usize);
+        let (next_secret, _) = next_secret.expose_secret(|_exposed_secret| {});
+        assert_eq!(NUM_DROPS.load(Ordering::Relaxed), 0usize);
+        let (_, _) = next_secret.expose_secret(|_exposed_secret| {});
+        assert_eq!(NUM_DROPS.load(Ordering::Relaxed), 1usize);
+    }
+
+    assert_eq!(NUM_DROPS.load(Ordering::Relaxed), 1usize);
+}
+
+#[test]
+fn test_exposed_fully_but_dropped() {
+    use core::sync::atomic::{AtomicUsize, Ordering};
+    #[cfg(feature = "zeroize")]
+    use zeroize::Zeroize;
+
+    #[cfg(feature = "zeroize")]
+    impl Zeroize for DetectDrop {
+        fn zeroize(&mut self) {}
+    }
+
+    static NUM_DROPS: AtomicUsize = AtomicUsize::new(0);
+    struct DetectDrop;
+
+    impl Drop for DetectDrop {
+        fn drop(&mut self) {
+            NUM_DROPS.fetch_add(1, Ordering::Relaxed);
+        }
+    }
+
+    let secret = Secret::<DetectDrop, U2>::new(DetectDrop);
+
+    {
+        let (next_secret, _) = secret.expose_secret(|_exposed_secret| {});
+        assert_eq!(NUM_DROPS.load(Ordering::Relaxed), 0usize);
+        let (_, _) = next_secret.expose_secret(|_exposed_secret| {});
+        assert_eq!(NUM_DROPS.load(Ordering::Relaxed), 1usize);
+    }
+
+    assert_eq!(NUM_DROPS.load(Ordering::Relaxed), 1usize);
+}
