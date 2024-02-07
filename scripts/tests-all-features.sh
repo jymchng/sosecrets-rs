@@ -13,6 +13,8 @@ generate_combinations() {
 
     if [ $index -eq $total_features ]; then
         # Run cargo test with the current combination of features
+        echo "Running: cargo test --release --features $combination"
+        cargo test --release --features "$combination"
         echo "Running: cargo test --features $combination"
         cargo test --features "$combination"
     else
