@@ -5,6 +5,9 @@
 #[cfg(feature = "alloc")]
 extern crate alloc;
 
+// #[cfg(feature = "runtime-secret")]
+pub mod runtime;
+
 mod macros;
 mod secret;
 

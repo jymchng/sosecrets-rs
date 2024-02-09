@@ -44,6 +44,7 @@ type AddU1<A> = <A as core::ops::Add<U1>>::Output;
 /// - `zeroize` (optional): If enabled, the secret will be automatically zeroized (cleared) after reaching its maximum exposure count.
 /// - `cloneable-secret` (optional): If enabled, the underlying type `T` must implement the `sosecrets_rs::traits::CloneableSecret` trait, allowing the secret to be cloned.
 /// - `debug-secret` (optional): If enabled, the underlying type `T` must implement the `sosecrets_rs::traits::DebugSecret` trait, enabling debugging of the secret.
+#[repr(transparent)]
 pub struct Secret<
     #[cfg(feature = "zeroize")] T: Zeroize,
     #[cfg(not(feature = "zeroize"))] T,
