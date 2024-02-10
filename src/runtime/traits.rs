@@ -1,4 +1,4 @@
-pub trait ExposeSecret<'secret, T> {
+pub trait RTExposeSecret<'secret, T> {
     type Exposed<'brand>
     where
         'secret: 'brand;

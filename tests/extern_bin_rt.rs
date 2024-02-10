@@ -1,7 +1,7 @@
 #![no_std]
 use sosecrets_rs::runtime::{
-    secret::{ExposedSecret, RunTimeSecret},
-    traits::ExposeSecret,
+    secret::{RTExposedSecret, RTSecret},
+    traits::RTExposeSecret,
 };
 
 #[test]
@@ -12,22 +12,22 @@ fn test_bounds() {
     // This has to take a value, since the async fn's return type is unnameable.
     // fn check_send_sync_val<T: Send + Sync>(_t: T) {}
     // fn check_send_sync<T: Send + Sync>() {}
-    check_unpin::<RunTimeSecret<i32, 2>>();
-    check_send::<RunTimeSecret<i32, 2>>();
-    check_unpin::<ExposedSecret<'_, PhantomData<fn(&()) -> &()>>>();
-    check_send::<ExposedSecret<'_, PhantomData<fn(&()) -> &()>>>();
+    check_unpin::<RTSecret<i32, 2>>();
+    check_send::<RTSecret<i32, 2>>();
+    check_unpin::<RTExposedSecret<'_, PhantomData<fn(&()) -> &()>>>();
+    check_send::<RTExposedSecret<'_, PhantomData<fn(&()) -> &()>>>();
 
-    // let secret = RunTimeSecret::<i32, 5>::new(69);
+    // let secret = RTSecret::<i32, 5>::new(69);
     // check_send_sync_val(secret);
-    // let secret = RunTimeSecret::<i32, 5>::new(69);
+    // let secret = RTSecret::<i32, 5>::new(69);
     // check_send_sync_val(secret.expose_secret(|_| {}));
 
-    // check_send_sync::<RunTimeSecret<i32, 2>>();
+    // check_send_sync::<RTSecret<i32, 2>>();
 }
 
 #[test]
 fn test_expose_secret_runtime() {
-    let secret_one = RunTimeSecret::<isize, 2>::new(69);
+    let secret_one = RTSecret::<isize, 2>::new(69);
 
     let _ = secret_one.expose_secret(|exposed_secret| {
         assert_eq!(*exposed_secret, 69);
@@ -39,9 +39,9 @@ fn test_expose_secret_runtime() {
 }
 
 #[test]
-#[should_panic = "`RunTimeSecret` has been exposed 3 times, more than what it is maximally allowed for: 2 times"]
+#[should_panic = "`RTSecret` has been exposed 3 times, more than what it is maximally allowed for: 2 times"]
 fn test_expose_secret_runtime_should_panic() {
-    let secret_one = RunTimeSecret::<isize, 2>::new(69);
+    let secret_one = RTSecret::<isize, 2>::new(69);
 
     let _ = secret_one.expose_secret(|exposed_secret| {
         assert_eq!(*exposed_secret, 69);
