@@ -7,12 +7,15 @@ use sosecrets_rs::runtime::{
 #[test]
 fn test_bounds() {
     use core::marker::PhantomData;
+    fn check_send<T: Send>() {}
     fn check_unpin<T: Unpin>() {}
     // This has to take a value, since the async fn's return type is unnameable.
     // fn check_send_sync_val<T: Send + Sync>(_t: T) {}
     // fn check_send_sync<T: Send + Sync>() {}
     check_unpin::<RunTimeSecret<i32, 2>>();
+    check_send::<RunTimeSecret<i32, 2>>();
     check_unpin::<ExposedSecret<'_, PhantomData<fn(&()) -> &()>>>();
+    check_send::<ExposedSecret<'_, PhantomData<fn(&()) -> &()>>>();
 
     // let secret = RunTimeSecret::<i32, 5>::new(69);
     // check_send_sync_val(secret);
