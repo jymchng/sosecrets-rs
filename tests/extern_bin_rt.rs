@@ -55,3 +55,33 @@ fn test_expose_secret_runtime_should_panic() {
         assert_eq!(*exposed_secret, 69);
     });
 }
+
+// #[test]
+// fn test_expose_secret_runtime_cannot_return_secret() {
+
+//     #[cfg(feature = "zeroize")]
+//     use zeroize::Zeroize;
+
+//     struct A {
+//         inner: i32,
+//     }
+
+//     #[cfg(feature = "zeroize")]
+//     impl Zeroize for A {
+//         fn zeroize(&mut self) {
+//             self.inner.zeroize()
+//         }
+//     }
+
+//     let secret_one = RTSecret::<A, 2>::new(A {
+//         inner: 69,
+//     });
+
+//     let _ = secret_one.expose_secret(|exposed_secret| {
+//         exposed_secret
+//     });
+
+//     let _ = secret_one.expose_secret(|exposed_secret| {
+//         *exposed_secret
+//     });
+// }

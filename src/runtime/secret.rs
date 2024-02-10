@@ -1,7 +1,5 @@
 use core::{cell::UnsafeCell, marker::PhantomData, ops::Deref};
 
-extern crate std;
-
 use crate::runtime::traits;
 pub struct RTSecret<T, const MEC: usize>(T, UnsafeCell<usize>);
 pub struct RTExposedSecret<'brand, T>(T, PhantomData<fn(&'brand ()) -> &'brand ()>);
