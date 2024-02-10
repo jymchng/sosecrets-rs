@@ -1,13 +1,13 @@
-#[non_exhaustive]
 #[derive(Debug)]
+#[non_exhaustive]
 pub enum ExposeSecretError {
     ExposeMoreThanMaximallyAllow(ExposeMoreThanMaximallyAllowError),
 }
 
 #[derive(Debug)]
 pub struct ExposeMoreThanMaximallyAllowError {
-    mec: usize,
-    ec: usize,
+    pub mec: usize,
+    pub ec: usize,
 }
 
 impl core::fmt::Display for ExposeMoreThanMaximallyAllowError {
