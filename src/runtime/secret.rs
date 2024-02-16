@@ -38,11 +38,9 @@ impl<'secret, T, const MEC: usize> traits::RTExposeSecret<'secret, &'secret T>
     {
         match self.try_expose_secret(scope) {
             Ok(returned_value) => returned_value,
-            Err(err) => match err {
-                error::ExposeSecretError::ExposeMoreThanMaximallyAllow(err) => {
-                    panic!("`RTSecret` has already been exposed {} times, which is also the maximum number it is allowed to be exposed for.", err.mec)
-                }
-            },
+            Err(error::ExposeSecretError::ExposeMoreThanMaximallyAllow(err)) => {
+                panic!("`RTSecret` has already been exposed {} times, which is also the maximum number it is allowed to be exposed for.", err.mec)
+            }
         }
     }
 
