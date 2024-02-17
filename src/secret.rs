@@ -112,15 +112,14 @@ impl<
         #[cfg(not(feature = "zeroize"))] T,
         MEC: Unsigned + IsGreaterOrEqual<U0, Output = True> + Sub<U1>,
     > ExposeSecret<'max, &'max T, MEC> for Secret<T, MEC>
-where
-    Sub1<MEC>: Unsigned + IsGreaterOrEqual<U0, Output = True> + Sub<U1>,
 {
     type Exposed<'brand> = ExposedSecret<'brand, &'brand T>
     where
         'max: 'brand;
 
-    type Next = Secret<T, Sub1<MEC>>
+    type Next = Secret<T, <MEC as Sub<U1>>::Output>
     where
+        MEC: Unsigned + IsGreaterOrEqual<U0, Output = True> + Sub<U1>,
         Sub1<MEC>: Unsigned + IsGreaterOrEqual<U0, Output = True> + Sub<U1>;
 
     #[inline(always)]

@@ -27,7 +27,7 @@ pub trait ExposeSecret<'max, T, MEC: Unsigned + Sub<U1> + IsGreaterOrEqual<U0, O
     type Next: ExposeSecret<'max, T, Sub1<MEC>>
     where
         MEC: Unsigned + IsGreaterOrEqual<U0, Output = True> + Sub<U1>,
-        Sub1<MEC>: Unsigned + Sub<U1> + IsGreaterOrEqual<U0, Output = True>;
+        <MEC as Sub<U1>>::Output: Unsigned + Sub<U1> + IsGreaterOrEqual<U0, Output = True>;
 
     /// Exposes the secret and returns the `Secret<T, _, _>` with an incremented count (i.e. `EC`), along with the result of a provided closure.
     ///
