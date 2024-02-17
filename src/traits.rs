@@ -1,5 +1,6 @@
-use core::ops::Add;
-use typenum::{IsLessOrEqual, Sum, True, Unsigned, U1};
+use crate::secret::Sub1;
+use core::ops::Sub;
+use typenum::{IsGreaterOrEqual, True, Unsigned, U0, U1};
 
 /// A trait for safely exposing secrets with a limited exposure count.
 ///
@@ -13,7 +14,9 @@ use typenum::{IsLessOrEqual, Sum, True, Unsigned, U1};
 /// - `T`: The type of the secret being exposed.
 /// - `MEC`: A type-level unsigned integer (with `typenum::Unsigned` trait bound) representing the maximum exposure count.
 /// - `EC`: A type-level unsigned integer (with `typenum::Unsigned` trait bound) representing the current exposure count.
-pub trait ExposeSecret<'max, T, MEC: Unsigned, EC: Unsigned>: Sized {
+pub trait ExposeSecret<'max, T, MEC: Unsigned + Sub<U1> + IsGreaterOrEqual<U0, Output = True>>:
+    Sized
+{
     /// A wrapper type representing the exposed secret. It is associated with a lifetime `'brand`, indicating the lifetime of the wrapper type, which is strictly a subtype of `'max`,
     type Exposed<'brand>
     where
@@ -21,10 +24,10 @@ pub trait ExposeSecret<'max, T, MEC: Unsigned, EC: Unsigned>: Sized {
 
     /// The `Secret<T, _, _>` with an incremented count (i.e. `EC`) after exposing the secret.
     /// It is a new value of a type which implements the same trait, namely, `ExposeSecret` with an incremented exposure count, i.e. the new `EC` = previous `EC` + `1`.
-    type Next: ExposeSecret<'max, T, MEC, Sum<EC, U1>>
+    type Next: ExposeSecret<'max, T, Sub1<MEC>>
     where
-        EC: Add<U1> + Unsigned + IsLessOrEqual<MEC, Output = True>,
-        Sum<EC, U1>: Unsigned + IsLessOrEqual<MEC, Output = True> + Add<U1>;
+        MEC: Unsigned + IsGreaterOrEqual<U0, Output = True> + Sub<U1>,
+        Sub1<MEC>: Unsigned + Sub<U1> + IsGreaterOrEqual<U0, Output = True>;
 
     /// Exposes the secret and returns the `Secret<T, _, _>` with an incremented count (i.e. `EC`), along with the result of a provided closure.
     ///
@@ -36,8 +39,8 @@ pub trait ExposeSecret<'max, T, MEC: Unsigned, EC: Unsigned>: Sized {
     fn expose_secret<ReturnType, ClosureType>(self, scope: ClosureType) -> (Self::Next, ReturnType)
     where
         for<'brand> ClosureType: FnOnce(Self::Exposed<'brand>) -> ReturnType,
-        EC: Add<U1> + IsLessOrEqual<MEC, Output = True>,
-        Sum<EC, U1>: Unsigned + Add<U1> + IsLessOrEqual<MEC, Output = True>;
+        MEC: Unsigned + IsGreaterOrEqual<U0, Output = True> + Sub<U1>,
+        Sub1<MEC>: Unsigned + IsGreaterOrEqual<U0, Output = True> + Sub<U1>;
 }
 
 #[cfg(feature = "cloneable-secret")]

@@ -11,12 +11,12 @@
 use core::{
     marker::PhantomData,
     mem::{forget, ManuallyDrop},
-    ops::{Add, Deref, Drop},
+    ops::{Deref, Drop, Sub},
 };
 
 use crate::traits::ExposeSecret;
 pub use typenum;
-use typenum::{IsLessOrEqual, Sum, True, Unsigned, U0, U1};
+use typenum::{IsGreaterOrEqual, True, Unsigned, U0, U1};
 
 #[cfg(feature = "zeroize")]
 use zeroize::Zeroize;
@@ -27,7 +27,7 @@ use crate::traits::CloneableSecret;
 #[cfg(feature = "debug-secret")]
 use crate::traits::DebugSecret;
 
-type AddU1<A> = <A as core::ops::Add<U1>>::Output;
+pub(crate) type Sub1<K> = <K as Sub<U1>>::Output;
 
 /// The `Secret` struct represents a secure container for managing sensitive values with built-in exposure control.
 ///
@@ -48,17 +48,17 @@ type AddU1<A> = <A as core::ops::Add<U1>>::Output;
 pub struct Secret<
     #[cfg(feature = "zeroize")] T: Zeroize,
     #[cfg(not(feature = "zeroize"))] T,
-    MEC: Unsigned,
-    EC: Add<U1> + IsLessOrEqual<MEC, Output = True> + Unsigned = U0,
->(ManuallyDrop<T>, PhantomData<(MEC, EC)>);
+    MEC: Unsigned + IsGreaterOrEqual<U0, Output = True> + Sub<U1>,
+>(ManuallyDrop<T>, PhantomData<MEC>);
 
 /// Type representing an exposed secret value. It holds an annotated (`'brand`) [invariant](https://doc.rust-lang.org/nomicon/subtyping.html#variance) lifetime.
 pub struct ExposedSecret<'brand, T>(T, PhantomData<fn(&'brand ()) -> &'brand ()>);
 
-impl<#[cfg(feature = "zeroize")] T: Zeroize, #[cfg(not(feature = "zeroize"))] T, MEC: Unsigned>
-    Secret<T, MEC, U0>
-where
-    U0: IsLessOrEqual<MEC, Output = True>,
+impl<
+        #[cfg(feature = "zeroize")] T: Zeroize,
+        #[cfg(not(feature = "zeroize"))] T,
+        MEC: Unsigned + IsGreaterOrEqual<U0, Output = True> + Sub<U1>,
+    > Secret<T, MEC>
 {
     /// Creates a new `Secret` instance with the specified value.
     ///
@@ -110,26 +110,27 @@ impl<
         'max,
         #[cfg(feature = "zeroize")] T: Zeroize,
         #[cfg(not(feature = "zeroize"))] T,
-        MEC: Unsigned,
-        EC: Add<U1> + Unsigned + IsLessOrEqual<MEC, Output = True>,
-    > ExposeSecret<'max, &'max T, MEC, EC> for Secret<T, MEC, EC>
+        MEC: Unsigned + IsGreaterOrEqual<U0, Output = True> + Sub<U1>,
+    > ExposeSecret<'max, &'max T, MEC> for Secret<T, MEC>
+where
+    Sub1<MEC>: Unsigned + IsGreaterOrEqual<U0, Output = True> + Sub<U1>,
 {
     type Exposed<'brand> = ExposedSecret<'brand, &'brand T>
     where
         'max: 'brand;
 
-    type Next = Secret<T, MEC, Sum<EC, U1>>
+    type Next = Secret<T, Sub1<MEC>>
     where
-        EC: Add<U1> + Unsigned + IsLessOrEqual<MEC, Output = True>,
-        Sum<EC, U1>: Unsigned + IsLessOrEqual<MEC, Output = True> + Add<U1>;
+        Sub1<MEC>: Unsigned + IsGreaterOrEqual<U0, Output = True> + Sub<U1>;
 
     #[inline(always)]
     fn expose_secret<ReturnType, ClosureType>(
         mut self,
         scope: ClosureType,
-    ) -> (Secret<T, MEC, AddU1<EC>>, ReturnType)
+    ) -> (Secret<T, Sub1<MEC>>, ReturnType)
     where
-        AddU1<EC>: Add<U1> + Unsigned + IsLessOrEqual<MEC, Output = True>,
+        Sub1<MEC>: Sub<U1> + Unsigned + IsGreaterOrEqual<U0, Output = True>,
+        MEC: Unsigned + IsGreaterOrEqual<U0, Output = True> + Sub<U1>,
         for<'brand> ClosureType: FnOnce(ExposedSecret<'brand, &'brand T>) -> ReturnType,
     {
         let returned_value = scope(ExposedSecret(&self.0, PhantomData));
@@ -152,11 +153,11 @@ impl<T> Deref for ExposedSecret<'_, &'_ T> {
     }
 }
 
-impl<#[cfg(feature = "zeroize")] T: Zeroize, #[cfg(not(feature = "zeroize"))] T, MEC, EC> Drop
-    for Secret<T, MEC, EC>
-where
-    MEC: Unsigned,
-    EC: Add<U1> + Unsigned + IsLessOrEqual<MEC, Output = True>,
+impl<
+        #[cfg(feature = "zeroize")] T: Zeroize,
+        #[cfg(not(feature = "zeroize"))] T,
+        MEC: Sub<U1> + Unsigned + IsGreaterOrEqual<U0, Output = True>,
+    > Drop for Secret<T, MEC>
 {
     #[inline(always)]
     fn drop(&mut self) {
@@ -171,11 +172,10 @@ where
 }
 
 #[cfg(feature = "cloneable-secret")]
-impl<T, MEC, EC> Clone for Secret<T, MEC, EC>
+impl<T, MEC> Clone for Secret<T, MEC>
 where
     T: CloneableSecret,
-    MEC: Unsigned,
-    EC: Unsigned + Add<U1> + IsLessOrEqual<MEC, Output = True>,
+    Sub1<MEC>: Sub<U1> + Unsigned + IsGreaterOrEqual<U0, Output = True>,
 {
     #[inline(always)]
     fn clone(&self) -> Self {
@@ -184,11 +184,10 @@ where
 }
 
 #[cfg(feature = "debug-secret")]
-impl<T, MEC, EC> core::fmt::Debug for Secret<T, MEC, EC>
+impl<T, MEC> core::fmt::Debug for Secret<T, MEC>
 where
     T: DebugSecret,
-    MEC: Unsigned,
-    EC: Unsigned + Add<U1> + IsLessOrEqual<MEC, Output = True>,
+    Sub1<MEC>: Sub<U1> + Unsigned + IsGreaterOrEqual<U0, Output = True>,
 {
     #[inline(always)]
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
