@@ -8,7 +8,7 @@ use core::fmt::Write;
 #[test]
 fn test_expose_secret_extern() {
     let secret = "MySecret".to_owned();
-    let new_secret: Secret<_, U5, _> = Secret::new(secret);
+    let new_secret: Secret<_, U5> = Secret::new(secret);
     let (_new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
         let returned_value = UseSecret::new((*exposed_secret).to_owned());
         returned_value
@@ -21,7 +21,7 @@ fn test_expose_secret_extern() {
 #[test]
 fn test_secret_with_vec_and_clone() {
     let secret_vec = vec!["MySecret".to_string()];
-    let new_secret: Secret<_, U2, _> = Secret::new(secret_vec);
+    let new_secret: Secret<_, U2> = Secret::new(secret_vec);
     let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
         let returned_value = UseSecret::new((*exposed_secret).to_owned());
         returned_value
@@ -53,7 +53,7 @@ fn test_expose_secret_with_wrapper() {
     }
 
     let secret = SecretString("MySecret".to_owned());
-    let new_secret: Secret<_, U50, _> = Secret::new(secret);
+    let new_secret: Secret<_, U50> = Secret::new(secret);
     let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
         let returned_value = UseSecret::new((*exposed_secret).to_owned());
         returned_value
