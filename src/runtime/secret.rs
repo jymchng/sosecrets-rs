@@ -20,8 +20,11 @@ impl<T, const MEC: usize> RTSecret<T, MEC> {
         Self(f(), UnsafeCell::new(0))
     }
 
-    pub fn exposure_count(&self) -> usize {
-        unsafe { *self.1.get() }
+    pub fn exposure_count(&self) -> &usize {
+        // SAFETY: The function only returns a shared reference (&usize) to the exposure count.
+        // It does not allow mutable access to the exposure count directly.
+        // This means that while external code can observe the exposure count, it cannot modify it directly.
+        unsafe { &*self.1.get() }
     }
 }
 
@@ -51,7 +54,7 @@ impl<'secret, T, const MEC: usize> traits::RTExposeSecret<'secret, &'secret T>
     where
         for<'brand> ClosureType: FnOnce(RTExposedSecret<'brand, &'brand T>) -> ReturnType,
     {
-        // SAFETY: All tuple fields of `RTSecret` are private, there are no getter / setter to them.
+        // SAFETY: All tuple fields of `RTSecret` are private, there are no setter to them.
         // `RTSecret` is also not `Sync` so it is not possible to have multithreading race condition.
         let ec_mut = unsafe { &mut *self.1.get() };
         if *ec_mut >= MEC {
@@ -84,7 +87,7 @@ mod tests {
         let mut usize_max_reached = false;
 
         for _ in 0..=2 {
-            if secret_one.exposure_count() == usize::MAX {
+            if secret_one.exposure_count() == &usize::MAX {
                 usize_max_reached = true;
                 assert!(usize_max_reached);
             };
