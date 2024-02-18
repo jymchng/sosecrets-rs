@@ -73,12 +73,10 @@ impl<'secret, T, MEC: Unsigned, SIZE: traits::MinimallyRepresentableUInt>
         // SAFETY: All tuple fields of `RTSecret` are private, there are no setter to them.
         // `RTSecret` is also not `Sync` so it is not possible to have multithreading race condition.
         let ec_mut = unsafe { &mut *self.1.get() };
-        if *ec_mut >= SIZE::cast_unsigned_to_self_type::<MEC>(__private::SealedToken {}) {
+        let mec = SIZE::cast_unsigned_to_self_type::<MEC>(__private::SealedToken {});
+        if *ec_mut >= mec {
             return Err(error::ExposeSecretError::ExposeMoreThanMaximallyAllow(
-                error::ExposeMoreThanMaximallyAllowError {
-                    mec: MEC::USIZE,
-                    ec: *ec_mut,
-                },
+                error::ExposeMoreThanMaximallyAllowError { mec, ec: *ec_mut },
             ));
         };
         *ec_mut += SIZE::ONE;

@@ -1,0 +1,57 @@
+error[E0603]: module `__private` is private
+ --> trybuild_tests/runtime/cannot_impl_minimally_representable_uints.rs:1:107
+  |
+1 | use sosecrets_rs::{prelude::{typenum::{Unsigned, U8, U69}}, runtime::traits::{MinimallyRepresentableUInt, __private}};
+  |                                                                                                           ^^^^^^^^^ private module
+  |
+note: the module `__private` is defined here
+ --> src/runtime/traits.rs
+  |
+  | pub(crate) mod __private {
+  | ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0277]: the trait bound `A: typenum::sealed::Sealed` is not satisfied
+ --> trybuild_tests/runtime/cannot_impl_minimally_representable_uints.rs:8:23
+  |
+8 |     impl Unsigned for A {}
+  |                       ^ the trait `typenum::sealed::Sealed` is not implemented for `A`
+  |
+  = help: the following other types implement trait `typenum::sealed::Sealed`:
+            B0
+            B1
+            PInt<U>
+            NInt<U>
+            Z0
+            ATerm
+            TArr<V, A>
+            sosecrets_rs::prelude::typenum::Greater
+          and $N others
+note: required by a bound in `Unsigned`
+ --> $CARGO/typenum-1.17.0/src/marker_traits.rs
+  |
+  | pub trait Unsigned: Sealed + Copy + Default + 'static {
+  |                     ^^^^^^ required by this bound in `Unsigned`
+  = note: `Unsigned` is a "sealed trait", because to implement it you also need to implement `sosecrets_rs::prelude::typenum::sealed::Sealed`, which is not accessible; this is usually done to force you to use one of the provided types that already implement it
+
+error[E0277]: the trait bound `A: typenum::sealed::Sealed` is not satisfied
+  --> trybuild_tests/runtime/cannot_impl_minimally_representable_uints.rs:11:41
+   |
+11 |     impl MinimallyRepresentableUInt for A {}
+   |                                         ^ the trait `typenum::sealed::Sealed` is not implemented for `A`
+   |
+   = help: the following other types implement trait `typenum::sealed::Sealed`:
+             B0
+             B1
+             PInt<U>
+             NInt<U>
+             Z0
+             ATerm
+             TArr<V, A>
+             sosecrets_rs::prelude::typenum::Greater
+           and $N others
+   = note: required for `A` to implement `Unsigned`
+note: required by a bound in `MinimallyRepresentableUInt`
+  --> src/runtime/traits.rs
+   |
+   | pub trait MinimallyRepresentableUInt: Unsigned {
+   |                                       ^^^^^^^^ required by this bound in `MinimallyRepresentableUInt`

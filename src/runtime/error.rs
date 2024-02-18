@@ -8,7 +8,7 @@ pub enum ExposeSecretError<SIZE: MinimallyRepresentableUInt> {
 
 #[derive(Debug)]
 pub struct ExposeMoreThanMaximallyAllowError<SIZE: MinimallyRepresentableUInt> {
-    pub mec: usize,
+    pub mec: SIZE::Type,
     pub ec: SIZE::Type,
 }
 
