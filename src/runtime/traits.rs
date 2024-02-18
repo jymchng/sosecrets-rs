@@ -1,10 +1,10 @@
 use core::{
+    cmp::PartialOrd,
     fmt::{Debug, Display},
     ops::AddAssign,
 };
 
 pub use crate::runtime::error;
-use num_traits::AsPrimitive;
 use typenum::Unsigned;
 
 pub trait RTExposeSecret<'secret, T, SIZE: MinimallyRepresentableUInt> {
@@ -24,9 +24,17 @@ pub trait RTExposeSecret<'secret, T, SIZE: MinimallyRepresentableUInt> {
         for<'brand> ClosureType: FnOnce(Self::Exposed<'brand>) -> ReturnType;
 }
 
-pub(crate) trait MinimallyRepresentableUInt: Unsigned {
-    type Type: AddAssign + AsPrimitive<usize> + Debug + Display;
+pub(crate) mod __private {
+
+    pub struct SealedToken {}
+}
+
+pub trait MinimallyRepresentableUInt: Unsigned {
+    // indeed, `u8`, `u16`, `u32` and `u64` all satisfy these bounds
+    type Type: AddAssign + PartialOrd + Debug + Display + Copy;
     type UIntMaxValueAsType;
     const MIN: Self::Type;
     const ONE: Self::Type;
+
+    fn cast_unsigned_to_self_type<T: Unsigned>(_: __private::SealedToken) -> Self::Type;
 }

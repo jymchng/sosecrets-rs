@@ -1,7 +1,9 @@
 use core::{cell::UnsafeCell, marker::PhantomData, ops::Deref};
 
-use crate::runtime::{error, traits};
-use num_traits::{AsPrimitive, ConstOne};
+use crate::runtime::{
+    error,
+    traits::{self, __private},
+};
 use typenum::{IsLessOrEqual, True, Unsigned, U64};
 
 pub struct RTSecret<T, MEC: Unsigned, SIZE: traits::MinimallyRepresentableUInt = U64>(
@@ -71,8 +73,7 @@ impl<'secret, T, MEC: Unsigned, SIZE: traits::MinimallyRepresentableUInt>
         // SAFETY: All tuple fields of `RTSecret` are private, there are no setter to them.
         // `RTSecret` is also not `Sync` so it is not possible to have multithreading race condition.
         let ec_mut = unsafe { &mut *self.1.get() };
-        let ec_mut_usize: usize = ec_mut.as_();
-        if ec_mut_usize >= MEC::USIZE {
+        if *ec_mut >= SIZE::cast_unsigned_to_self_type::<MEC>(__private::SealedToken {}) {
             return Err(error::ExposeSecretError::ExposeMoreThanMaximallyAllow(
                 error::ExposeMoreThanMaximallyAllowError {
                     mec: MEC::USIZE,

@@ -1,5 +1,5 @@
 use sosecrets_rs::{
-    prelude::typenum::{U0, U1, U2},
+    prelude::typenum::{U1, U2},
     runtime::{
         secret::{RTExposedSecret, RTSecret},
         traits::RTExposeSecret,
