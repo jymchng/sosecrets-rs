@@ -1,12 +1,24 @@
-use core::{cell::UnsafeCell, marker::PhantomData, ops::Deref};
+use core::{
+    cell::UnsafeCell,
+    marker::PhantomData,
+    ops::{Deref, Drop},
+};
 
 use crate::runtime::{
+    common::DefaultMinimallyRepresentableUInt,
     error,
     traits::{self, __private},
 };
-use typenum::{IsLessOrEqual, True, Unsigned, U64};
+use typenum::{IsLessOrEqual, True, Unsigned};
+#[cfg(feature = "zeroize")]
+use zeroize::Zeroize;
 
-pub struct RTSecret<T, MEC: Unsigned, SIZE: traits::MinimallyRepresentableUInt = U64>(
+pub struct RTSecret<
+    #[cfg(feature = "zeroize")] T: Zeroize,
+    #[cfg(not(feature = "zeroize"))] T,
+    MEC: Unsigned,
+    SIZE: traits::MinimallyRepresentableUInt = DefaultMinimallyRepresentableUInt,
+>(
     T,
     UnsafeCell<<SIZE as traits::MinimallyRepresentableUInt>::Type>,
     PhantomData<MEC>,
@@ -21,7 +33,13 @@ impl<'brand, T> Deref for RTExposedSecret<'brand, &'brand T> {
     }
 }
 
-impl<T, MEC: Unsigned, SIZE: traits::MinimallyRepresentableUInt> RTSecret<T, MEC, SIZE> {
+impl<
+        #[cfg(feature = "zeroize")] T: Zeroize,
+        #[cfg(not(feature = "zeroize"))] T,
+        MEC: Unsigned,
+        SIZE: traits::MinimallyRepresentableUInt,
+    > RTSecret<T, MEC, SIZE>
+{
     pub const fn new(t: T) -> Self
     where
         MEC: IsLessOrEqual<SIZE::UIntMaxValueAsType, Output = True>,
@@ -44,8 +62,13 @@ impl<T, MEC: Unsigned, SIZE: traits::MinimallyRepresentableUInt> RTSecret<T, MEC
     }
 }
 
-impl<'secret, T, MEC: Unsigned, SIZE: traits::MinimallyRepresentableUInt>
-    traits::RTExposeSecret<'secret, &'secret T, SIZE> for RTSecret<T, MEC, SIZE>
+impl<
+        'secret,
+        #[cfg(feature = "zeroize")] T: Zeroize,
+        #[cfg(not(feature = "zeroize"))] T,
+        MEC: Unsigned,
+        SIZE: traits::MinimallyRepresentableUInt,
+    > traits::RTExposeSecret<'secret, &'secret T, SIZE> for RTSecret<T, MEC, SIZE>
 {
     type Exposed<'brand> = RTExposedSecret<'brand, &'brand T>
     where
@@ -58,7 +81,7 @@ impl<'secret, T, MEC: Unsigned, SIZE: traits::MinimallyRepresentableUInt>
         match self.try_expose_secret(scope) {
             Ok(returned_value) => returned_value,
             Err(error::ExposeSecretError::ExposeMoreThanMaximallyAllow(err)) => {
-                panic!("`RTSecret` has already been exposed {} times, which is also the maximum number it is allowed to be exposed for.", err.mec)
+                panic!("`RTSecret` has already been exposed for {} times, the maximum number it is allowed to be exposed for is {} times.", err.ec, err.mec)
             }
         }
     }
@@ -84,6 +107,19 @@ impl<'secret, T, MEC: Unsigned, SIZE: traits::MinimallyRepresentableUInt>
     }
 }
 
+impl<
+        #[cfg(feature = "zeroize")] T: Zeroize,
+        #[cfg(not(feature = "zeroize"))] T,
+        MEC: Unsigned,
+        SIZE: traits::MinimallyRepresentableUInt,
+    > Drop for RTSecret<T, MEC, SIZE>
+{
+    fn drop(&mut self) {
+        #[cfg(feature = "zeroize")]
+        self.0.zeroize()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -91,23 +127,23 @@ mod tests {
 
     #[test]
     #[should_panic(
-        expected = "`RTSecret` has already been exposed 2 times, which is also the maximum number it is allowed to be exposed for."
+        expected = "`RTSecret` has already been exposed for 255 times, the maximum number it is allowed to be exposed for is 255 times."
     )]
     fn test_usize_max_expose_secret() {
-        use typenum::{U2, U8};
-        let mut secret_one = RTSecret::<isize, U2, U8>::new(69);
-        *secret_one.1.get_mut() = u8::MAX - 1;
-        #[allow(unused_assignments)]
-        let mut usize_max_reached = false;
+        use typenum::{U255, U8};
+        let mut secret_one = RTSecret::<isize, U255, U8>::new(69);
+        *secret_one.1.get_mut() = u8::MAX - 6;
 
-        for _ in 0..=2 {
-            if secret_one.exposure_count() == &u8::MAX {
-                usize_max_reached = true;
-                assert!(usize_max_reached);
-            };
+        for _ in 0..=5 {
             let _ = secret_one.expose_secret(|exposed_secret| {
                 assert_eq!(*exposed_secret, 69);
             });
         }
+
+        assert_eq!(secret_one.exposure_count(), &u8::MAX);
+
+        let _ = secret_one.expose_secret(|exposed_secret| {
+            assert_eq!(*exposed_secret, 69);
+        });
     }
 }

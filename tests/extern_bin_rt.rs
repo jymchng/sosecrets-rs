@@ -41,7 +41,7 @@ fn test_expose_secret_runtime() {
 }
 
 #[test]
-#[should_panic = "`RTSecret` has already been exposed 2 times, which is also the maximum number it is allowed to be exposed for."]
+#[should_panic = "`RTSecret` has already been exposed for 2 times, the maximum number it is allowed to be exposed for is 2 times."]
 fn test_expose_secret_runtime_should_panic() {
     let secret_one = RTSecret::<isize, U2>::new(69);
 

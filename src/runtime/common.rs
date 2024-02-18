@@ -46,3 +46,12 @@ impl MinimallyRepresentableUInt for U64 {
         <T as Unsigned>::U64
     }
 }
+
+#[cfg(target_pointer_width = "16")]
+pub(crate) type DefaultMinimallyRepresentableUInt = typenum::U16;
+
+#[cfg(target_pointer_width = "32")]
+pub(crate) type DefaultMinimallyRepresentableUInt = typenum::U32;
+
+#[cfg(target_pointer_width = "64")]
+pub(crate) type DefaultMinimallyRepresentableUInt = typenum::U64;
