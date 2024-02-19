@@ -58,6 +58,43 @@ fn test_expose_secret_runtime_should_panic() {
     });
 }
 
+#[test]
+fn test_min_uint_outcomes() {
+    use core::ops::Sub;
+    use sosecrets_rs::{
+        prelude::typenum::{Add1, U1, U100, U1000, U365, U65536},
+        traits::ChooseMinimallyRepresentableUInt,
+    };
+
+    type SubU1<K> = <K as Sub<U1>>::Output;
+
+    assert_eq!(
+        <U100 as ChooseMinimallyRepresentableUInt>::Output::MAX,
+        u8::MAX
+    );
+    assert_eq!(
+        <U1000 as ChooseMinimallyRepresentableUInt>::Output::MAX,
+        u16::MAX
+    );
+    assert_eq!(
+        <U365 as ChooseMinimallyRepresentableUInt>::Output::MAX,
+        u16::MAX
+    );
+    assert_eq!(
+        <Add1<U65536> as ChooseMinimallyRepresentableUInt>::Output::MAX,
+        u32::MAX
+    );
+    assert_eq!(
+        <SubU1<U65536> as ChooseMinimallyRepresentableUInt>::Output::MAX,
+        u16::MAX
+    );
+
+    let _: <U65536 as ChooseMinimallyRepresentableUInt>::Output = 65536;
+    let _: <SubU1<U65536> as ChooseMinimallyRepresentableUInt>::Output = 65535;
+    let _: <U1000 as ChooseMinimallyRepresentableUInt>::Output = 9999;
+    let _: <U365 as ChooseMinimallyRepresentableUInt>::Output = 365 * 99;
+}
+
 // #[test]
 // fn test_expose_secret_runtime_cannot_return_secret() {
 
