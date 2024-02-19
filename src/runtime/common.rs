@@ -1,4 +1,4 @@
-use crate::runtime::traits::{MinimallyRepresentableUInt, __private};
+use crate::{runtime::traits::MinimallyRepresentableUInt, traits::__private};
 use core::ops::Sub;
 
 use typenum::{Exp, Unsigned, U1, U16, U2, U256, U32, U4294967296, U64, U65536, U8};

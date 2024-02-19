@@ -5,6 +5,8 @@ use core::{
 };
 
 pub use crate::runtime::error;
+
+use crate::traits::__private;
 use typenum::Unsigned;
 
 pub trait RTExposeSecret<'secret, T, SIZE: MinimallyRepresentableUInt> {
@@ -22,11 +24,6 @@ pub trait RTExposeSecret<'secret, T, SIZE: MinimallyRepresentableUInt> {
     ) -> Result<ReturnType, error::ExposeSecretError<SIZE>>
     where
         for<'brand> ClosureType: FnOnce(Self::Exposed<'brand>) -> ReturnType;
-}
-
-pub(crate) mod __private {
-
-    pub struct SealedToken {}
 }
 
 pub trait MinimallyRepresentableUInt: Unsigned {

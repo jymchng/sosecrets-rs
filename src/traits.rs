@@ -1,4 +1,8 @@
-use core::ops::Add;
+use core::{
+    cmp::PartialOrd,
+    fmt::{Debug, Display},
+    ops::{Add, AddAssign},
+};
 use typenum::{IsLessOrEqual, Sum, True, Unsigned, U1};
 
 /// A trait for safely exposing secrets with a limited exposure count.
@@ -152,4 +156,13 @@ mod debug_secret {
     crate::macros::impl_debug_secret_for_numbers!(
         i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize, f32, f64
     );
+}
+
+pub(crate) mod __private {
+
+    pub struct SealedToken {}
+}
+
+pub trait ChooseMinimallyRepresentableUInt {
+    type Output: AddAssign + PartialOrd + Debug + Display + Copy;
 }

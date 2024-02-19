@@ -4,10 +4,9 @@ use core::{
     ops::{Deref, Drop},
 };
 
-use crate::runtime::{
-    common::DefaultMinimallyRepresentableUInt,
-    error,
-    traits::{self, __private},
+use crate::{
+    runtime::{common::DefaultMinimallyRepresentableUInt, error, traits},
+    traits::__private,
 };
 use typenum::{IsLessOrEqual, True, Unsigned};
 #[cfg(feature = "zeroize")]
