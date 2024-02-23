@@ -162,6 +162,7 @@ mod debug_secret {
 
 pub trait ChooseMinimallyRepresentableUInt: __private::SealedTrait {
     type Output: AddAssign
+        + Add<Self::Output, Output = Self::Output>
         + PartialOrd
         + Debug
         + Display

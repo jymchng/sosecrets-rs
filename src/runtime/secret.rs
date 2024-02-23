@@ -79,16 +79,14 @@ impl<
     where
         for<'brand> ClosureType: FnOnce(RTExposedSecret<'brand, &'brand T>) -> ReturnType,
     {
-        // SAFETY: All tuple fields of `RTSecret` are private, there are no setter to them.
-        // `RTSecret` is also not `Sync` so it is not possible to have multithreading race condition.
-        let ec_mut = unsafe { &mut *self.1.as_ptr() };
+        let ec_mut = self.1.get();
         let mec = MEC::cast_unsigned_to_self_type::<MEC>(__private::SealedToken {});
-        if *ec_mut >= mec {
+        if ec_mut >= mec {
             return Err(error::ExposeSecretError::ExposeMoreThanMaximallyAllow(
-                error::ExposeMoreThanMaximallyAllowError { mec, ec: *ec_mut },
+                error::ExposeMoreThanMaximallyAllowError { mec, ec: ec_mut },
             ));
         };
-        *ec_mut += MEC::ONE;
+        self.1.set(ec_mut + MEC::ONE);
         Ok(scope(RTExposedSecret(&self.0, PhantomData)))
     }
 }

@@ -95,32 +95,41 @@ fn test_min_uint_outcomes() {
     let _: <U365 as ChooseMinimallyRepresentableUInt>::Output = 365 * 99;
 }
 
-// #[test]
-// fn test_expose_secret_runtime_cannot_return_secret() {
+#[test]
+fn test_can_cross_unwind_boundaries_if_copy() {
+    use core::panic::AssertUnwindSafe;
 
-//     #[cfg(feature = "zeroize")]
-//     use zeroize::Zeroize;
+    extern crate std;
+    use sosecrets_rs::{
+        prelude::typenum::U2,
+        runtime::{secret::RTSecret, traits::RTExposeSecret},
+    };
+    use std::panic::catch_unwind;
 
-//     struct A {
-//         inner: i32,
-//     }
+    #[cfg(feature = "zeroize")]
+    use zeroize::Zeroize;
 
-//     #[cfg(feature = "zeroize")]
-//     impl Zeroize for A {
-//         fn zeroize(&mut self) {
-//             self.inner.zeroize()
-//         }
-//     }
+    #[derive(Copy, Clone)]
+    struct A {
+        inner: i32,
+    }
 
-//     let secret_one = RTSecret::<A, 2>::new(A {
-//         inner: 69,
-//     });
+    #[cfg(feature = "zeroize")]
+    impl Zeroize for A {
+        fn zeroize(&mut self) {
+            self.inner.zeroize()
+        }
+    }
 
-//     let _ = secret_one.expose_secret(|exposed_secret| {
-//         exposed_secret
-//     });
+    let mut opt_a: Option<A> = Option::<A>::None;
 
-//     let _ = secret_one.expose_secret(|exposed_secret| {
-//         *exposed_secret
-//     });
-// }
+    let secret_one = RTSecret::<A, U2>::new(A { inner: 69 });
+
+    let _ = catch_unwind(AssertUnwindSafe(|| {
+        secret_one.expose_secret(|exposed_secret| {
+            opt_a.replace(*exposed_secret);
+            panic!();
+        });
+    }));
+    assert_eq!(opt_a.unwrap().inner, 69);
+}
