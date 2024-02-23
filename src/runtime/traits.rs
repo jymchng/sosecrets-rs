@@ -6,10 +6,10 @@ use core::{
 
 pub use crate::runtime::error;
 
-use crate::traits::__private;
+use crate::traits::{ChooseMinimallyRepresentableUInt, __private};
 use typenum::Unsigned;
 
-pub trait RTExposeSecret<'secret, T, SIZE: MinimallyRepresentableUInt> {
+pub trait RTExposeSecret<'secret, T, MEC: ChooseMinimallyRepresentableUInt> {
     type Exposed<'brand>
     where
         'secret: 'brand;
@@ -21,7 +21,7 @@ pub trait RTExposeSecret<'secret, T, SIZE: MinimallyRepresentableUInt> {
     fn try_expose_secret<ReturnType, ClosureType>(
         &self,
         scope: ClosureType,
-    ) -> Result<ReturnType, error::ExposeSecretError<SIZE>>
+    ) -> Result<ReturnType, error::ExposeSecretError<MEC>>
     where
         for<'brand> ClosureType: FnOnce(Self::Exposed<'brand>) -> ReturnType;
 }

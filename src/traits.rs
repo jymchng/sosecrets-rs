@@ -2,6 +2,7 @@ use crate::macros::impl_choose_int;
 use core::{
     cmp::PartialOrd,
     fmt::{Debug, Display},
+    hash::Hash,
     ops::{Add, AddAssign},
 };
 use typenum::{IsLessOrEqual, Sum, True, Unsigned, U1};
@@ -159,14 +160,28 @@ mod debug_secret {
     );
 }
 
+pub trait ChooseMinimallyRepresentableUInt: __private::SealedTrait {
+    type Output: AddAssign
+        + PartialOrd
+        + Debug
+        + Display
+        + Copy
+        + Eq
+        + Ord
+        + PartialOrd
+        + Clone
+        + Hash
+        + Default;
+    const MIN: Self::Output;
+    const ONE: Self::Output;
+
+    fn cast_unsigned_to_self_type<T: Unsigned>(_: __private::SealedToken) -> Self::Output;
+}
+
 pub(crate) mod __private {
 
     pub struct SealedToken {}
     pub trait SealedTrait {}
-}
-
-pub trait ChooseMinimallyRepresentableUInt: __private::SealedTrait {
-    type Output: AddAssign + PartialOrd + Debug + Display + Copy;
 }
 
 impl_choose_int! {

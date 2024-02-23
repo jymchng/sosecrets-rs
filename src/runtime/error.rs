@@ -1,26 +1,26 @@
-use crate::runtime::traits::MinimallyRepresentableUInt;
+use crate::traits::ChooseMinimallyRepresentableUInt;
 
 #[derive(Debug)]
 #[non_exhaustive]
-pub enum ExposeSecretError<SIZE: MinimallyRepresentableUInt> {
-    ExposeMoreThanMaximallyAllow(ExposeMoreThanMaximallyAllowError<SIZE>),
+pub enum ExposeSecretError<MEC: ChooseMinimallyRepresentableUInt> {
+    ExposeMoreThanMaximallyAllow(ExposeMoreThanMaximallyAllowError<MEC>),
 }
 
 #[derive(Debug)]
-pub struct ExposeMoreThanMaximallyAllowError<SIZE: MinimallyRepresentableUInt> {
-    pub mec: SIZE::Type,
-    pub ec: SIZE::Type,
+pub struct ExposeMoreThanMaximallyAllowError<MEC: ChooseMinimallyRepresentableUInt> {
+    pub mec: <MEC as ChooseMinimallyRepresentableUInt>::Output,
+    pub ec: <MEC as ChooseMinimallyRepresentableUInt>::Output,
 }
 
-impl<SIZE: MinimallyRepresentableUInt> core::fmt::Display
-    for ExposeMoreThanMaximallyAllowError<SIZE>
+impl<MEC: ChooseMinimallyRepresentableUInt> core::fmt::Display
+    for ExposeMoreThanMaximallyAllowError<MEC>
 {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "`Secret` is exposed more than what it is maximally allowed to; it is exposed for {} times and it is only allowed to be exposed for {} times", self.ec, self.mec)
     }
 }
 
-impl<SIZE: MinimallyRepresentableUInt> core::fmt::Display for ExposeSecretError<SIZE> {
+impl<MEC: ChooseMinimallyRepresentableUInt> core::fmt::Display for ExposeSecretError<MEC> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             Self::ExposeMoreThanMaximallyAllow(err) => err.fmt(f),
