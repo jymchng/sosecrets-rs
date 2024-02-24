@@ -1,5 +1,5 @@
 use sosecrets_rs::{
-    prelude::typenum::{U1, U2},
+    prelude::typenum::{U0, U1, U2},
     runtime::{
         secret::{RTExposedSecret, RTSecret},
         traits::RTExposeSecret,
@@ -29,6 +29,17 @@ fn test_bounds() {
 
 #[test]
 fn test_expose_secret_runtime() {
+    let secret_one = RTSecret::<isize, U0>::new(69);
+
+    for _ in 0..=u64::MAX {
+        let _ = secret_one.expose_secret(|exposed_secret| {
+            assert_eq!(*exposed_secret, 69);
+        });
+    }
+}
+
+#[test]
+fn test_expose_secret_runtime_unchecked() {
     let secret_one = RTSecret::<isize, U2>::new(69);
 
     let _ = secret_one.expose_secret(|exposed_secret| {

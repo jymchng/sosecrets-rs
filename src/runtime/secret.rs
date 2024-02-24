@@ -5,10 +5,10 @@ use core::{
 };
 
 use crate::{
-    runtime::{error, traits},
+    runtime::{common::Unchecked, error, traits},
     traits::{ChooseMinimallyRepresentableUInt, __private},
 };
-use typenum::Unsigned;
+use typenum::{IsGreater, True, Unsigned, U0};
 #[cfg(feature = "zeroize")]
 use zeroize::Zeroize;
 
@@ -47,13 +47,22 @@ impl<
     pub fn exposure_count(&self) -> <MEC as ChooseMinimallyRepresentableUInt>::Output {
         self.1.get()
     }
+
+    // Should be a trait impl
+    // pub fn expose_secret_unchecked<ReturnType, ClosureType>(&self, scope: ClosureType) -> ReturnType
+    // where
+    //     MEC: IsEqual<Unchecked, Output = True>,
+    //     for<'brand> ClosureType: FnOnce(RTExposedSecret<'brand, &'brand T>) -> ReturnType,
+    // {
+    //     scope(RTExposedSecret(&self.0, PhantomData))
+    // }
 }
 
 impl<
         'secret,
         #[cfg(feature = "zeroize")] T: Zeroize,
         #[cfg(not(feature = "zeroize"))] T,
-        MEC: ChooseMinimallyRepresentableUInt + Unsigned,
+        MEC: ChooseMinimallyRepresentableUInt + Unsigned + IsGreater<U0, Output = True>,
     > traits::RTExposeSecret<'secret, &'secret T, MEC> for RTSecret<T, MEC>
 {
     type Exposed<'brand> = RTExposedSecret<'brand, &'brand T>
@@ -62,6 +71,7 @@ impl<
 
     fn expose_secret<ReturnType, ClosureType>(&self, scope: ClosureType) -> ReturnType
     where
+        MEC: IsGreater<Unchecked, Output = True>,
         for<'brand> ClosureType: FnOnce(RTExposedSecret<'brand, &'brand T>) -> ReturnType,
     {
         match self.try_expose_secret(scope) {
@@ -77,6 +87,7 @@ impl<
         scope: ClosureType,
     ) -> Result<ReturnType, error::ExposeSecretError<MEC>>
     where
+        MEC: IsGreater<Unchecked, Output = True>,
         for<'brand> ClosureType: FnOnce(RTExposedSecret<'brand, &'brand T>) -> ReturnType,
     {
         let ec_mut = self.1.get();
