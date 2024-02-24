@@ -1,6 +1,8 @@
 #![no_std]
 #![doc = include_str!("../README.md")]
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
+// Apply #![recursion_limit = "256"] only if #![cfg(target_pointer_width = "128")]
+#![cfg_attr(target_pointer_width = "128", recursion_limit = "256")]
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
