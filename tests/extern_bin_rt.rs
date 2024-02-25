@@ -28,7 +28,7 @@ fn test_bounds() {
 }
 
 #[test]
-fn test_expose_secret_runtime() {
+fn test_expose_secret_runtime_unchecked() {
     let secret_one = RTSecret::<isize, U0>::new(69);
 
     for _ in 0..=10000 {
@@ -39,7 +39,7 @@ fn test_expose_secret_runtime() {
 }
 
 #[test]
-fn test_expose_secret_runtime_unchecked() {
+fn test_expose_secret_runtime() {
     let secret_one = RTSecret::<isize, U2>::new(69);
 
     let _ = secret_one.expose_secret(|exposed_secret| {
@@ -49,6 +49,13 @@ fn test_expose_secret_runtime_unchecked() {
     let _ = secret_one.expose_secret(|exposed_secret| {
         assert_eq!(*exposed_secret, 69);
     });
+}
+
+#[test]
+fn test_size_of_unchecked_secret() {
+    use core::mem::size_of;
+
+    assert_eq!(size_of::<RTSecret<isize, U0>>(), size_of::<isize>());
 }
 
 #[test]
@@ -81,6 +88,10 @@ fn test_min_uint_outcomes() {
 
     assert_eq!(
         <U100 as ChooseMinimallyRepresentableUInt>::Output::MAX,
+        u8::MAX
+    );
+    assert_eq!(
+        <U1 as ChooseMinimallyRepresentableUInt>::Output::MAX,
         u8::MAX
     );
     assert_eq!(
