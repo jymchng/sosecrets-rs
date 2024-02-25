@@ -2,7 +2,7 @@ use sosecrets_rs::{
     prelude::typenum::{U0, U1, U2},
     runtime::{
         secret::{RTExposedSecret, RTSecret},
-        traits::RTExposeSecret,
+        traits::{RTExposeSecret, RTExposeSecretUnchecked},
     },
 };
 
@@ -31,8 +31,8 @@ fn test_bounds() {
 fn test_expose_secret_runtime() {
     let secret_one = RTSecret::<isize, U0>::new(69);
 
-    for _ in 0..=u64::MAX {
-        let _ = secret_one.expose_secret(|exposed_secret| {
+    for _ in 0..=10000 {
+        let _ = secret_one.expose_secret_unchecked(|exposed_secret| {
             assert_eq!(*exposed_secret, 69);
         });
     }

@@ -9,6 +9,16 @@ pub use crate::runtime::error;
 use crate::traits::{ChooseMinimallyRepresentableUInt, __private};
 use typenum::{IsGreater, True, Unsigned, U0};
 
+pub trait RTExposeSecretUnchecked<'secret, T> {
+    type Exposed<'brand>
+    where
+        'secret: 'brand;
+
+    fn expose_secret_unchecked<ReturnType, ClosureType>(&self, scope: ClosureType) -> ReturnType
+    where
+        for<'brand> ClosureType: FnOnce(Self::Exposed<'brand>) -> ReturnType;
+}
+
 pub trait RTExposeSecret<
     'secret,
     T,

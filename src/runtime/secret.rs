@@ -47,15 +47,21 @@ impl<
     pub fn exposure_count(&self) -> <MEC as ChooseMinimallyRepresentableUInt>::Output {
         self.1.get()
     }
+}
 
-    // Should be a trait impl
-    // pub fn expose_secret_unchecked<ReturnType, ClosureType>(&self, scope: ClosureType) -> ReturnType
-    // where
-    //     MEC: IsEqual<Unchecked, Output = True>,
-    //     for<'brand> ClosureType: FnOnce(RTExposedSecret<'brand, &'brand T>) -> ReturnType,
-    // {
-    //     scope(RTExposedSecret(&self.0, PhantomData))
-    // }
+impl<'secret, #[cfg(feature = "zeroize")] T: Zeroize, #[cfg(not(feature = "zeroize"))] T>
+    traits::RTExposeSecretUnchecked<'secret, &'secret T> for RTSecret<T, U0>
+{
+    type Exposed<'brand> = RTExposedSecret<'brand, &'brand T>
+    where
+        'secret: 'brand;
+
+    fn expose_secret_unchecked<ReturnType, ClosureType>(&self, scope: ClosureType) -> ReturnType
+    where
+        for<'brand> ClosureType: FnOnce(RTExposedSecret<'brand, &'brand T>) -> ReturnType,
+    {
+        scope(RTExposedSecret(&self.0, PhantomData))
+    }
 }
 
 impl<
