@@ -62,12 +62,34 @@ pub type Unchecked = U0;
 impl SealedTrait for Unchecked {}
 
 impl ChooseMinimallyRepresentableUInt for Unchecked {
-    type Output = u8;
+    type Output = NumericalZeroSizedType;
 
-    const MIN: Self::Output = Self::Output::MIN;
-    const ONE: Self::Output = 1;
+    const MIN: Self::Output = NumericalZeroSizedType {};
+    const ONE: Self::Output = NumericalZeroSizedType {};
 
     fn cast_unsigned_to_self_type<T: Unsigned>(_: SealedToken) -> Self::Output {
-        <T as Unsigned>::U8 as Self::Output
+        NumericalZeroSizedType {}
+    }
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Default)]
+pub struct NumericalZeroSizedType {}
+
+impl core::ops::AddAssign<Self> for NumericalZeroSizedType {
+    fn add_assign(&mut self, _other: Self) {}
+}
+
+impl core::ops::Add<Self> for NumericalZeroSizedType {
+    type Output = Self;
+
+    fn add(self, _other: Self) -> Self::Output {
+        NumericalZeroSizedType {}
+    }
+}
+
+impl core::fmt::Display for NumericalZeroSizedType {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        // Implement the display trait as needed
+        write!(f, "NumericalZeroSizedType")
     }
 }
