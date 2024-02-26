@@ -33,10 +33,12 @@ impl<
         MEC: ChooseMinimallyRepresentableUInt + Unsigned,
     > RTSecret<T, MEC>
 {
+    #[inline(always)]
     pub const fn new(t: T) -> Self {
         Self(t, Cell::new(<MEC as ChooseMinimallyRepresentableUInt>::MIN))
     }
 
+    #[inline(always)]
     pub fn new_with(f: impl FnOnce() -> T) -> Self {
         Self(
             f(),
@@ -44,6 +46,7 @@ impl<
         )
     }
 
+    #[inline(always)]
     pub fn exposure_count(&self) -> <MEC as ChooseMinimallyRepresentableUInt>::Output {
         self.1.get()
     }
@@ -56,6 +59,7 @@ impl<'secret, #[cfg(feature = "zeroize")] T: Zeroize, #[cfg(not(feature = "zeroi
     where
         'secret: 'brand;
 
+    #[inline(always)]
     fn expose_secret_unchecked<ReturnType, ClosureType>(&self, scope: ClosureType) -> ReturnType
     where
         for<'brand> ClosureType: FnOnce(RTExposedSecret<'brand, &'brand T>) -> ReturnType,
@@ -75,6 +79,7 @@ impl<
     where
         'secret: 'brand;
 
+    #[inline(always)]
     fn expose_secret<ReturnType, ClosureType>(&self, scope: ClosureType) -> ReturnType
     where
         MEC: IsGreater<Unchecked, Output = True>,
@@ -88,6 +93,7 @@ impl<
         }
     }
 
+    #[inline(always)]
     fn try_expose_secret<ReturnType, ClosureType>(
         &self,
         scope: ClosureType,
