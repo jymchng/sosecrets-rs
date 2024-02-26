@@ -22,6 +22,15 @@ macro_rules! impl_debug_secret_for_numbers {
 #[cfg(feature = "debug-secret")]
 pub(crate) use impl_debug_secret_for_numbers;
 
+macro_rules! impl_sealed_trait_for_uint {
+    ($($t:ty),*) => {
+        $(
+            impl $crate::traits::__private::SealedTrait for $t {}
+        )*
+    };
+}
+pub(crate) use impl_sealed_trait_for_uint;
+
 macro_rules! impl_choose_int {
     // Entry point
     ($($arg:ident => $out:ty;)*) => {
@@ -45,6 +54,7 @@ macro_rules! impl_choose_int {
 
         impl<$($prev_args,)* $arg> $crate::traits::ChooseMinimallyRepresentableUInt for $crate::prelude::typenum::uint::UInt<$prev_num, $arg> {
             type Output = $out;
+            type AtomicOutput = <$out as $crate::traits::AsAtomic>::Output;
             const MIN: Self::Output = Self::Output::MIN;
             const ONE: Self::Output = 1;
 

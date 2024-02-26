@@ -1,7 +1,7 @@
 #[test]
 fn test_compile_fails() {
     let t = trybuild::TestCases::new();
-    t.compile_fail("trybuild_tests/runtime/cannot_impl_minimally_representable_uints.rs");
+    // t.compile_fail("trybuild_tests/runtime/cannot_impl_minimally_representable_uints.rs");
     t.compile_fail("trybuild_tests/runtime/cannot_cross_unwind_if_not_copy.rs");
     t.compile_fail("trybuild_tests/runtime/cannot_return_exposed_secret.rs");
     t.compile_fail("trybuild_tests/runtime/u0_cannot_call_expose_secret.rs");

@@ -1,4 +1,4 @@
-use crate::macros::impl_choose_int;
+use crate::macros::{impl_choose_int, impl_sealed_trait_for_uint};
 use core::{
     cmp::PartialOrd,
     fmt::{Debug, Display},
@@ -160,6 +160,8 @@ mod debug_secret {
     );
 }
 
+impl_sealed_trait_for_uint!(u8, u16, u32, u64, u128);
+
 pub trait ChooseMinimallyRepresentableUInt: __private::SealedTrait {
     type Output: AddAssign
         + Add<Self::Output, Output = Self::Output>
@@ -173,10 +175,15 @@ pub trait ChooseMinimallyRepresentableUInt: __private::SealedTrait {
         + Clone
         + Hash
         + Default;
+    type AtomicOutput;
     const MIN: Self::Output;
     const ONE: Self::Output;
 
     fn cast_unsigned_to_self_type<T: Unsigned>(_: __private::SealedToken) -> Self::Output;
+}
+
+pub trait AsAtomic: __private::SealedTrait {
+    type Output;
 }
 
 pub(crate) mod __private {
