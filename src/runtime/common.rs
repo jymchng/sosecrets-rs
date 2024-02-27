@@ -56,7 +56,3 @@ impl AsAtomic for u32 {
 impl AsAtomic for u64 {
     type Output = core::sync::atomic::AtomicU64;
 }
-
-impl AsAtomic for u128 {
-    type Output = NumericalZeroSizedType;
-}
