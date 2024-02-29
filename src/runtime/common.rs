@@ -41,18 +41,22 @@ impl core::fmt::Display for NumericalZeroSizedType {
     }
 }
 
+#[cfg(target_has_atomic = "8")]
 impl AsAtomic for u8 {
     type Output = core::sync::atomic::AtomicU8;
 }
 
+#[cfg(target_has_atomic = "16")]
 impl AsAtomic for u16 {
     type Output = core::sync::atomic::AtomicU16;
 }
 
+#[cfg(target_has_atomic = "32")]
 impl AsAtomic for u32 {
     type Output = core::sync::atomic::AtomicU32;
 }
 
+#[cfg(target_has_atomic = "64")]
 impl AsAtomic for u64 {
     type Output = core::sync::atomic::AtomicU64;
 }

@@ -12,6 +12,12 @@ use typenum::{IsGreater, True, Unsigned, U0};
 #[cfg(feature = "zeroize")]
 use zeroize::Zeroize;
 
+#[cfg(feature = "cloneable-secret")]
+use crate::traits::CloneableSecret;
+
+#[cfg(feature = "debug-secret")]
+use crate::traits::DebugSecret;
+
 pub struct RTSecret<
     #[cfg(feature = "zeroize")] T: Zeroize,
     #[cfg(not(feature = "zeroize"))] T,
@@ -123,6 +129,32 @@ impl<
     fn drop(&mut self) {
         #[cfg(feature = "zeroize")]
         self.0.zeroize()
+    }
+}
+
+#[cfg(feature = "cloneable-secret")]
+impl<T, MEC> Clone for RTSecret<T, MEC>
+where
+    T: CloneableSecret,
+    MEC: ChooseMinimallyRepresentableUInt + Unsigned,
+{
+    #[inline(always)]
+    fn clone(&self) -> Self {
+        Self(self.0.clone(), PhantomData)
+    }
+}
+
+#[cfg(feature = "debug-secret")]
+impl<T, MEC> core::fmt::Debug for RTSecret<T, MEC>
+where
+    T: DebugSecret,
+    MEC: ChooseMinimallyRepresentableUInt + Unsigned,
+{
+    #[inline(always)]
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.write_str("RTSecret<")?;
+        T::debug_secret(f)?;
+        f.write_str(">")
     }
 }
 
