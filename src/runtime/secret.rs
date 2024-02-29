@@ -140,7 +140,7 @@ where
 {
     #[inline(always)]
     fn clone(&self) -> Self {
-        Self(self.0.clone(), PhantomData)
+        Self(self.0.clone(), self.1.clone())
     }
 }
 
