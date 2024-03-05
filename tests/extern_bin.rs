@@ -536,3 +536,23 @@ fn test_exposed_fully_but_dropped() {
 
     assert_eq!(NUM_DROPS.load(Ordering::Relaxed), 1usize);
 }
+
+#[cfg(not(feature = "zeroize"))]
+// no need to test for ref if feature = "zeroize" is not enabled because T: Zeroize and no way for &'a T to impl Zeroize
+#[test]
+fn test_static_ref_and_ref_can_leak_secret() {
+    use sosecrets_rs::traits::ExposeSecret;
+
+    #[derive(Debug, Clone)]
+    struct GlobalA {
+        _inner: i32,
+    }
+
+    static STATIC_A: GlobalA = GlobalA { _inner: 69 };
+
+    let secret_one: Secret<&'static GlobalA, U2> = Secret::new(&STATIC_A);
+
+    let (_, exposed_secret) = secret_one.expose_secret(|exposed_secret| *exposed_secret);
+
+    assert_eq!(exposed_secret._inner, 69);
+}
