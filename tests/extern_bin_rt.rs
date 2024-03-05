@@ -155,3 +155,100 @@ fn test_can_cross_unwind_boundaries_if_copy() {
     }));
     assert_eq!(opt_a.unwrap().inner, 69);
 }
+
+#[test]
+#[should_panic = "`RTSecret` has already been exposed for 1 times, the maximum number it is allowed to be exposed for is 1 times."]
+fn test_unwind_can_catch_panic_but_secret_will_continue_to_panic() {
+    use core::panic::AssertUnwindSafe;
+
+    extern crate std;
+    use sosecrets_rs::{
+        prelude::typenum::U1,
+        runtime::{secret::RTSecret, traits::RTExposeSecret},
+    };
+    use std::panic::catch_unwind;
+
+    #[cfg(feature = "zeroize")]
+    use zeroize::Zeroize;
+
+    #[derive(Copy, Clone)]
+    struct A {
+        _inner: i32,
+    }
+
+    #[cfg(feature = "zeroize")]
+    impl Zeroize for A {
+        fn zeroize(&mut self) {
+            self._inner.zeroize()
+        }
+    }
+
+    let secret_one = RTSecret::<A, U1>::new(A { _inner: 69 });
+
+    let _ = secret_one.expose_secret(|_| {});
+
+    let _ = catch_unwind(AssertUnwindSafe(|| {
+        secret_one.expose_secret(|_| {});
+    }));
+
+    let _ = catch_unwind(AssertUnwindSafe(|| {
+        secret_one.expose_secret(|_| {});
+    }));
+
+    let _ = catch_unwind(AssertUnwindSafe(|| {
+        secret_one.expose_secret(|_| {});
+    }));
+
+    let _ = catch_unwind(AssertUnwindSafe(|| {
+        secret_one.expose_secret(|_| {});
+    }));
+
+    let _ = secret_one.expose_secret(|exposed_secret| *exposed_secret);
+}
+
+#[test]
+fn test_unwind_can_catch_panic_indefinitely() {
+    use core::panic::AssertUnwindSafe;
+
+    extern crate std;
+    use sosecrets_rs::{
+        prelude::typenum::U1,
+        runtime::{secret::RTSecret, traits::RTExposeSecret},
+    };
+    use std::panic::catch_unwind;
+
+    #[cfg(feature = "zeroize")]
+    use zeroize::Zeroize;
+
+    #[derive(Copy, Clone)]
+    struct A {
+        _inner: i32,
+    }
+
+    #[cfg(feature = "zeroize")]
+    impl Zeroize for A {
+        fn zeroize(&mut self) {
+            self._inner.zeroize()
+        }
+    }
+
+    let secret_one = RTSecret::<A, U1>::new(A { _inner: 69 });
+
+    let _ = secret_one.expose_secret(|_| {});
+
+    let _ = catch_unwind(AssertUnwindSafe(|| {
+        secret_one.expose_secret(|_| {});
+    }));
+
+    let _ = catch_unwind(AssertUnwindSafe(|| {
+        secret_one.expose_secret(|_| {});
+    }));
+
+    let _ = catch_unwind(AssertUnwindSafe(|| {
+        secret_one.expose_secret(|_| {});
+    }));
+
+    let _ = catch_unwind(AssertUnwindSafe(|| {
+        secret_one.expose_secret(|_| {});
+    }));
+}
