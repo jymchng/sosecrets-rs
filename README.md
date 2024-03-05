@@ -8,11 +8,9 @@
 Secrets Management crate with
 
 1. type level and compile-time guarantees and
-2. each references corresponding to each secrets can only be exposed or revealed under a lexical scope with an invariant lifetime and
-3. it is only exposed under an identifiable lexical scope and
-4. with an invariant lifetime.
+2. each reference corresponds to each secret that can only be exposed or revealed under a lexical scope with an invariant lifetime
 
-It is similar to the [`secrecy`](https://github.com/iqlusioninc/crates/tree/main/secrecy) crate but with type level and compile-time guarantees that the `Secret<T, MEC, EC>` value is not ’exposed’ more than `MEC` number of times.
+It is similar to the [`secrecy`](https://github.com/iqlusioninc/crates/tree/main/secrecy) crate but with type level and compile-time guarantees that the `Secret<T, MEC, EC>` value is not ’exposed’ more than `MEC` number of times and is only exposed under a well-defined lexical scope.
 
 It makes use of the [`typenum`](https://github.com/paholg/typenum/tree/main) crate for all its compile-time guarantees.
 
@@ -50,15 +48,18 @@ let (next_secret, exposed_value) = next_secret.expose_secret(|exposed_secret| {
     // Perform operations with the exposed value
     // ...
 });
+```
 
+```compile_fail
 // **Try** to expose the secret again and perform some operations with the exposed value; secret has been exposed once: `EC` = 3, `MEC` = 2;
 // The following when uncommented is uncompilable.
-// let (next_secret, exposed_value) = next_secret.expose_secret(|exposed_secret| {
-//     assert_eq!(&*exposed_secret.as_str(), "my_secret_value");
-//     // Perform operations with the exposed value
-//     // ...
-// });
+let (next_secret, exposed_value) = next_secret.expose_secret(|exposed_secret| {
+    assert_eq!(&*exposed_secret.as_str(), "my_secret_value");
+    // Perform operations with the exposed value
+    // ...
+});
 ```
+
 See more at the [examples](https://github.com/jymchng/sosecrets-rs/tree/master/examples/jwt) directory.
 
 ## Features Configuration
