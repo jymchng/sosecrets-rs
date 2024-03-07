@@ -33,6 +33,7 @@ pub trait ExposeSecret<'max, T, MEC: Unsigned, EC: Unsigned>: Sized {
         Sum<EC, U1>: Unsigned + IsLessOrEqual<MEC, Output = True> + Add<U1>;
 
     /// Exposes the secret and returns the `Secret<T, _, _>` with an incremented count (i.e. `EC`), along with the result of a provided closure.
+    /// It is impossible to return `Self::Exposed` associated type out from the closure `scope`.
     ///
     /// # Parameters
     /// - `self`.
