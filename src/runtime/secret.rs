@@ -26,6 +26,8 @@ pub struct RTSecret<
 
 pub struct RTExposedSecret<'brand, T>(T, PhantomData<fn(&'brand ()) -> &'brand ()>);
 
+pub type SecrecySecret<T> = RTSecret<T, U0>;
+
 impl<'brand, T> Deref for RTExposedSecret<'brand, &'brand T> {
     type Target = T;
     fn deref(&self) -> &Self::Target {
@@ -66,7 +68,7 @@ impl<'secret, #[cfg(feature = "zeroize")] T: Zeroize, #[cfg(not(feature = "zeroi
         'secret: 'brand;
 
     #[inline(always)]
-    fn expose_secret_unchecked<ReturnType, ClosureType>(&self, scope: ClosureType) -> ReturnType
+    fn expose_secret<ReturnType, ClosureType>(&self, scope: ClosureType) -> ReturnType
     where
         for<'brand> ClosureType: FnOnce(RTExposedSecret<'brand, &'brand T>) -> ReturnType,
     {

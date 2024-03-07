@@ -32,7 +32,17 @@ fn test_expose_secret_runtime_unchecked() {
     let secret_one = RTSecret::<isize, U0>::new(69);
 
     for _ in 0..=10000 {
-        let _ = secret_one.expose_secret_unchecked(|exposed_secret| {
+        let _ = secret_one.expose_secret(|exposed_secret| {
+            assert_eq!(*exposed_secret, 69);
+        });
+    }
+
+    use sosecrets_rs::runtime::secret::SecrecySecret;
+
+    let secret_two = SecrecySecret::new(69);
+
+    for _ in 0..=10000 {
+        let _ = secret_two.expose_secret(|exposed_secret| {
             assert_eq!(*exposed_secret, 69);
         });
     }

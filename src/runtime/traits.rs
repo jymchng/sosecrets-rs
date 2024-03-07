@@ -8,7 +8,7 @@ pub trait RTExposeSecretUnchecked<'secret, T> {
     where
         'secret: 'brand;
 
-    fn expose_secret_unchecked<ReturnType, ClosureType>(&self, scope: ClosureType) -> ReturnType
+    fn expose_secret<ReturnType, ClosureType>(&self, scope: ClosureType) -> ReturnType
     where
         for<'brand> ClosureType: FnOnce(Self::Exposed<'brand>) -> ReturnType;
 }
