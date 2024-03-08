@@ -6,7 +6,7 @@ use core::{
 
 use crate::{
     runtime::{error, traits},
-    traits::{ChooseMinimallyRepresentableUInt, __private},
+    traits::{ChooseMinimallyRepresentableUInt, NumericalZeroSizedType, __private},
 };
 use typenum::{IsGreater, True, Unsigned, U0};
 #[cfg(feature = "zeroize")]
@@ -29,6 +29,45 @@ pub struct RTSecret<
 /// The `RTExposedSecret` struct is a wrapper type representing an exposed secret. It is associated with an invariant lifetime `'brand`,
 /// indicating the lifetime of the wrapper type, which is strictly a subtype of the lifetime of the secret and cannot be coerced to be any other lifetime.
 pub struct RTExposedSecret<'brand, T>(T, PhantomData<fn(&'brand ()) -> &'brand ()>);
+
+pub struct SecrecySecret<#[cfg(feature = "zeroize")] T: Zeroize, #[cfg(not(feature = "zeroize"))] T>(
+    T,
+);
+
+impl<#[cfg(feature = "zeroize")] T: Zeroize, #[cfg(not(feature = "zeroize"))] T> SecrecySecret<T> {
+    pub const fn new(t: T) -> Self {
+        Self(t)
+    }
+
+    pub fn new_with(f: impl FnOnce() -> T) -> Self {
+        Self(f())
+    }
+}
+
+impl<'secret, #[cfg(feature = "zeroize")] T: Zeroize, #[cfg(not(feature = "zeroize"))] T>
+    traits::RTExposeSecret<'secret, &'secret T, NumericalZeroSizedType> for SecrecySecret<T>
+{
+    type Exposed<'brand> = RTExposedSecret<'brand, &'brand T>
+    where
+        'secret: 'brand;
+
+    fn expose_secret<ReturnType, ClosureType>(&self, scope: ClosureType) -> ReturnType
+    where
+        for<'brand> ClosureType: FnOnce(RTExposedSecret<'brand, &'brand T>) -> ReturnType,
+    {
+        scope(RTExposedSecret(&self.0, PhantomData))
+    }
+
+    fn try_expose_secret<ReturnType, ClosureType>(
+        &self,
+        scope: ClosureType,
+    ) -> Result<ReturnType, error::ExposeSecretError<NumericalZeroSizedType>>
+    where
+        for<'brand> ClosureType: FnOnce(RTExposedSecret<'brand, &'brand T>) -> ReturnType,
+    {
+        Ok(scope(RTExposedSecret(&self.0, PhantomData)))
+    }
+}
 
 impl<'brand, T> Deref for RTExposedSecret<'brand, &'brand T> {
     type Target = T;
