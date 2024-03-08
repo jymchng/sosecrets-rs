@@ -54,11 +54,10 @@ impl<
         )
     }
 
-    /// Retrieves the current exposure count of the secret.
+    /// Retrieves the current exposure count of the secret and returns it as an unsigned integer.
     ///
-    /// Returns the exposure count as an unsigned integer.
     /// Note: The actual unsigned integer type returned depends on the type-level value of the type parameter `MEC`,
-    /// it is the minimal representable type that can represent the value.
+    /// it is the minimal representable Rust's unsigned integer type that can represent the value.
     /// e.g. if `MEC` is `typenum::consts::U67`, then the returned type is `u8`.
     #[inline(always)]
     pub fn exposure_count(&self) -> <MEC as ChooseMinimallyRepresentableUInt>::Output {

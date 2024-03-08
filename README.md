@@ -50,13 +50,24 @@ let (next_secret, exposed_value) = next_secret.expose_secret(|exposed_secret| {
 });
 ```
 
+**Try** to expose the secret again and perform some operations with the exposed value; secret has been exposed once: `EC` = 3, `MEC` = 2;
+The following is uncompilable.
 ```compile_fail
-// **Try** to expose the secret again and perform some operations with the exposed value; secret has been exposed once: `EC` = 3, `MEC` = 2;
-// The following when uncommented is uncompilable.
 let (next_secret, exposed_value) = next_secret.expose_secret(|exposed_secret| {
     assert_eq!(&*exposed_secret.as_str(), "my_secret_value");
     // Perform operations with the exposed value
     // ...
+});
+```
+
+It is **impossible** to return the value (e.g. `exposed_secret` in the example above) passed into the closure, out of the closure. The following is uncompilable.
+
+```compile_fail
+let (next_secret, exposed_value) = next_secret.expose_secret(|exposed_secret| {
+    assert_eq!(&*exposed_secret.as_str(), "my_secret_value");
+    // Perform operations with the exposed value
+    // ...
+    exposed_secret // impossible to return `exposed_secret` here
 });
 ```
 
