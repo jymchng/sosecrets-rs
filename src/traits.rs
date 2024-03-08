@@ -323,6 +323,20 @@ impl ChooseMinimallyRepresentableUInt for U0 {
     }
 }
 
+impl __private::SealedTrait for NumericalZeroSizedType {}
+
+impl ChooseMinimallyRepresentableUInt for NumericalZeroSizedType {
+    type Output = NumericalZeroSizedType;
+    type AtomicOutput = NumericalZeroSizedType;
+
+    const MIN: Self::Output = NumericalZeroSizedType {};
+    const ONE: Self::Output = NumericalZeroSizedType {};
+
+    fn cast_unsigned_to_self_type<T: Unsigned>(_: __private::SealedToken) -> Self::Output {
+        NumericalZeroSizedType {}
+    }
+}
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Default)]
 pub struct NumericalZeroSizedType {}
 

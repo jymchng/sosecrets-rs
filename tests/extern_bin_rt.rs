@@ -1,9 +1,6 @@
 use sosecrets_rs::{
     prelude::typenum::{U0, U1, U2},
-    runtime::{
-        secret::{RTExposedSecret, RTSecret},
-        traits::RTExposeSecret,
-    },
+    runtime::{traits::RTExposeSecret, RTExposedSecret, RTSecret},
 };
 mod common;
 
