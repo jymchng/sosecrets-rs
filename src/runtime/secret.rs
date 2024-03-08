@@ -5,7 +5,7 @@ use core::{
 };
 
 use crate::{
-    runtime::{common::Unchecked, error, traits},
+    runtime::{error, traits},
     traits::{ChooseMinimallyRepresentableUInt, __private},
 };
 use typenum::{IsGreater, True, Unsigned, U0};
@@ -24,9 +24,11 @@ pub struct RTSecret<
     MEC: ChooseMinimallyRepresentableUInt + Unsigned,
 >(T, Cell<<MEC as ChooseMinimallyRepresentableUInt>::Output>);
 
+/// A wrapper type representing an exposed secret.
+///
+/// The `RTExposedSecret` struct is a wrapper type representing an exposed secret. It is associated with an invariant lifetime `'brand`,
+/// indicating the lifetime of the wrapper type, which is strictly a subtype of the lifetime of the secret and cannot be coerced to be any other lifetime.
 pub struct RTExposedSecret<'brand, T>(T, PhantomData<fn(&'brand ()) -> &'brand ()>);
-
-pub type SecrecySecret<T> = RTSecret<T, U0>;
 
 impl<'brand, T> Deref for RTExposedSecret<'brand, &'brand T> {
     type Target = T;
@@ -65,22 +67,6 @@ impl<
     }
 }
 
-impl<'secret, #[cfg(feature = "zeroize")] T: Zeroize, #[cfg(not(feature = "zeroize"))] T>
-    traits::RTExposeSecretUnchecked<'secret, &'secret T> for RTSecret<T, U0>
-{
-    type Exposed<'brand> = RTExposedSecret<'brand, &'brand T>
-    where
-        'secret: 'brand;
-
-    #[inline(always)]
-    fn expose_secret<ReturnType, ClosureType>(&self, scope: ClosureType) -> ReturnType
-    where
-        for<'brand> ClosureType: FnOnce(RTExposedSecret<'brand, &'brand T>) -> ReturnType,
-    {
-        scope(RTExposedSecret(&self.0, PhantomData))
-    }
-}
-
 impl<
         'secret,
         #[cfg(feature = "zeroize")] T: Zeroize,
@@ -95,7 +81,6 @@ impl<
     #[inline(always)]
     fn expose_secret<ReturnType, ClosureType>(&self, scope: ClosureType) -> ReturnType
     where
-        MEC: IsGreater<Unchecked, Output = True>,
         for<'brand> ClosureType: FnOnce(RTExposedSecret<'brand, &'brand T>) -> ReturnType,
     {
         match self.try_expose_secret(scope) {
@@ -112,7 +97,6 @@ impl<
         scope: ClosureType,
     ) -> Result<ReturnType, error::ExposeSecretError<MEC>>
     where
-        MEC: IsGreater<Unchecked, Output = True>,
         for<'brand> ClosureType: FnOnce(RTExposedSecret<'brand, &'brand T>) -> ReturnType,
     {
         let ec_mut = self.1.get();
@@ -133,6 +117,7 @@ impl<
         MEC: ChooseMinimallyRepresentableUInt + Unsigned,
     > Drop for RTSecret<T, MEC>
 {
+    /// Zeroizes the secret value when dropped if the `zeroize` feature is enabled.
     fn drop(&mut self) {
         #[cfg(feature = "zeroize")]
         self.0.zeroize()

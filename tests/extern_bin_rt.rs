@@ -2,7 +2,7 @@ use sosecrets_rs::{
     prelude::typenum::{U0, U1, U2},
     runtime::{
         secret::{RTExposedSecret, RTSecret},
-        traits::{RTExposeSecret, RTExposeSecretUnchecked},
+        traits::RTExposeSecret,
     },
 };
 
@@ -27,26 +27,26 @@ fn test_bounds() {
     // check_send_sync::<RTSecret<i32, 2>>();
 }
 
-#[test]
-fn test_expose_secret_runtime_unchecked() {
-    let secret_one = RTSecret::<isize, U0>::new(69);
+// #[test]
+// fn test_expose_secret_runtime_unchecked() {
+//     let secret_one = RTSecret::<isize, U0>::new(69);
 
-    for _ in 0..=10000 {
-        let _ = secret_one.expose_secret(|exposed_secret| {
-            assert_eq!(*exposed_secret, 69);
-        });
-    }
+//     for _ in 0..=10000 {
+//         let _ = secret_one.expose_secret(|exposed_secret| {
+//             assert_eq!(*exposed_secret, 69);
+//         });
+//     }
 
-    use sosecrets_rs::runtime::secret::SecrecySecret;
+//     use sosecrets_rs::runtime::secret::SecrecySecret;
 
-    let secret_two = SecrecySecret::new(69);
+//     let secret_two = SecrecySecret::new(69);
 
-    for _ in 0..=10000 {
-        let _ = secret_two.expose_secret(|exposed_secret| {
-            assert_eq!(*exposed_secret, 69);
-        });
-    }
-}
+//     for _ in 0..=10000 {
+//         let _ = secret_two.expose_secret(|exposed_secret| {
+//             assert_eq!(*exposed_secret, 69);
+//         });
+//     }
+// }
 
 #[test]
 fn test_expose_secret_runtime() {
