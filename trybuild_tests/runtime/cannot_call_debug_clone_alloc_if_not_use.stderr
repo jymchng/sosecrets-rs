@@ -1,0 +1,14 @@
+error[E0599]: no method named `clone` found for struct `RTSecret` in the current scope
+  --> trybuild_tests/runtime/cannot_call_debug_clone_alloc_if_not_use.rs:10:32
+   |
+10 |     let cloned_secret = secret.clone();
+   |                                ^^^^^ method not found in `RTSecret<Vec<i32>, UInt<UInt<UInt<UTerm, B1>, B0>, B1>>`
+
+error[E0277]: `RTSecret<Vec<i32>, UInt<UInt<UInt<UTerm, B1>, B0>, B1>>` doesn't implement `Debug`
+  --> trybuild_tests/runtime/cannot_call_debug_clone_alloc_if_not_use.rs:11:40
+   |
+11 |     let debug_secret = format!("{:?}", secret);
+   |                                        ^^^^^^ `RTSecret<Vec<i32>, UInt<UInt<UInt<UTerm, B1>, B0>, B1>>` cannot be formatted using `{:?}` because it doesn't implement `Debug`
+   |
+   = help: the trait `Debug` is not implemented for `RTSecret<Vec<i32>, UInt<UInt<UInt<UTerm, B1>, B0>, B1>>`
+   = note: this error originates in the macro `$crate::__export::format_args` which comes from the expansion of the macro `format` (in Nightly builds, run with -Z macro-backtrace for more info)
