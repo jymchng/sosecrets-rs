@@ -71,6 +71,7 @@ impl<
         'secret,
         #[cfg(feature = "zeroize")] T: Zeroize,
         #[cfg(not(feature = "zeroize"))] T,
+        // `IsGreater<U0, Output = True>` so that `RTSecret<T, U0>` cannot call `.expose_secret()`
         MEC: ChooseMinimallyRepresentableUInt + Unsigned + IsGreater<U0, Output = True>,
     > traits::RTExposeSecret<'secret, &'secret T, MEC> for RTSecret<T, MEC>
 {

@@ -588,3 +588,76 @@ fn test_scoped_threads_the_other_way_round() {
         });
     });
 }
+
+#[test]
+fn test_never_exposed_fully_but_dropped() {
+    use core::sync::atomic::{AtomicUsize, Ordering};
+    use sosecrets_rs::{prelude::typenum::U5, runtime::traits::RTExposeSecret};
+    #[cfg(feature = "zeroize")]
+    use zeroize::Zeroize;
+
+    #[cfg(feature = "zeroize")]
+    impl Zeroize for DetectDrop {
+        fn zeroize(&mut self) {}
+    }
+
+    static NUM_DROPS: AtomicUsize = AtomicUsize::new(0);
+
+    struct DetectDrop;
+
+    impl Drop for DetectDrop {
+        fn drop(&mut self) {
+            NUM_DROPS.fetch_add(1, Ordering::Relaxed);
+        }
+    }
+
+    {
+        let secret = RTSecret::<DetectDrop, U5>::new(DetectDrop);
+
+        {
+            let _ = secret.expose_secret(|_exposed_secret| {});
+            assert_eq!(NUM_DROPS.load(Ordering::Relaxed), 0usize);
+            let _ = secret.expose_secret(|_exposed_secret| {});
+            assert_eq!(NUM_DROPS.load(Ordering::Relaxed), 0usize);
+            let _ = secret.expose_secret(|_exposed_secret| {});
+            assert_eq!(NUM_DROPS.load(Ordering::Relaxed), 0usize);
+        }
+    }
+
+    assert_eq!(NUM_DROPS.load(Ordering::Relaxed), 1usize);
+}
+
+#[test]
+fn test_exposed_fully_but_dropped() {
+    use core::sync::atomic::{AtomicUsize, Ordering};
+    use sosecrets_rs::runtime::traits::RTExposeSecret;
+    #[cfg(feature = "zeroize")]
+    use zeroize::Zeroize;
+
+    #[cfg(feature = "zeroize")]
+    impl Zeroize for DetectDrop {
+        fn zeroize(&mut self) {}
+    }
+
+    static NUM_DROPS: AtomicUsize = AtomicUsize::new(0);
+    struct DetectDrop;
+
+    impl Drop for DetectDrop {
+        fn drop(&mut self) {
+            NUM_DROPS.fetch_add(1, Ordering::Relaxed);
+        }
+    }
+
+    {
+        let secret = RTSecret::<DetectDrop, U2>::new(DetectDrop);
+
+        {
+            let _ = secret.expose_secret(|_exposed_secret| {});
+            assert_eq!(NUM_DROPS.load(Ordering::Relaxed), 0usize);
+            let _ = secret.expose_secret(|_exposed_secret| {});
+            assert_eq!(NUM_DROPS.load(Ordering::Relaxed), 0usize);
+        }
+    }
+
+    assert_eq!(NUM_DROPS.load(Ordering::Relaxed), 1usize);
+}
