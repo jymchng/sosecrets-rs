@@ -5,6 +5,7 @@ use sosecrets_rs::{
         traits::RTExposeSecret,
     },
 };
+mod common;
 
 #[test]
 fn test_bounds() {
@@ -261,4 +262,329 @@ fn test_unwind_can_catch_panic_indefinitely() {
     let _ = catch_unwind(AssertUnwindSafe(|| {
         secret_one.expose_secret(|_| {});
     }));
+}
+
+#[test]
+#[cfg(feature = "debug-secret")]
+fn test_debug_secret_one() {
+    use core::fmt::Write;
+    use sosecrets_rs::{prelude::typenum::U5, traits::DebugSecret};
+    #[cfg(feature = "zeroize")]
+    use zeroize::Zeroize;
+
+    #[derive(Debug, Clone)]
+    struct A {
+        _inner: i32,
+    }
+
+    #[cfg(feature = "zeroize")]
+    impl Zeroize for A {
+        fn zeroize(&mut self) {
+            self._inner.zeroize()
+        }
+    }
+
+    impl DebugSecret for A {}
+
+    let a = A { _inner: 69 };
+
+    let mut cmp = common::Comparator::new("RTSecret<[REDACTED]>");
+
+    let new_secret: RTSecret<A, U5> = RTSecret::new(a.clone());
+    let _ = write!(&mut cmp, "{:?}", new_secret);
+    assert!(cmp.is_valid());
+}
+
+#[cfg(feature = "cloneable-secret")]
+#[cfg(feature = "alloc")]
+#[test]
+fn test_secret_with_vec_and_clone() {
+    use crate::common::UseSecret;
+
+    let secret_vec = vec!["MySecret".to_string()];
+    let new_secret: RTSecret<_, U2> = RTSecret::new(secret_vec);
+    let returned_value = new_secret.expose_secret(|exposed_secret| {
+        let returned_value = UseSecret::new((*exposed_secret).to_owned());
+        returned_value
+    });
+    assert_eq!(returned_value.inner, vec!["MySecret".to_owned()]);
+
+    let cloned_secret = new_secret.clone();
+    let returned_value = cloned_secret.expose_secret(|exposed_secret| {
+        let returned_value = UseSecret::new((*exposed_secret).to_owned());
+        returned_value
+    });
+    assert_eq!(returned_value.inner, vec!["MySecret".to_owned()]);
+}
+
+#[test]
+fn test_expose_secret_with_wrapper() {
+    use crate::common::UseSecret;
+    use typenum::U50;
+    #[cfg(feature = "zeroize")]
+    use zeroize::Zeroize;
+
+    #[derive(Clone, Debug, PartialEq)]
+    struct SecretString(String);
+
+    #[cfg(feature = "zeroize")]
+    impl Zeroize for SecretString {
+        fn zeroize(&mut self) {
+            self.0.zeroize();
+        }
+    }
+
+    let secret = SecretString("MySecret".to_owned());
+    let new_secret: RTSecret<_, U50> = RTSecret::new(secret);
+    let returned_value = new_secret.expose_secret(|exposed_secret| {
+        let returned_value = UseSecret::new((*exposed_secret).to_owned());
+        returned_value
+    });
+    assert_eq!(returned_value.inner, SecretString("MySecret".to_owned()));
+
+    let returned_value = new_secret.expose_secret(|exposed_secret| {
+        let returned_value = UseSecret::new((*exposed_secret).to_owned());
+        returned_value
+    });
+    assert_eq!(returned_value.inner, SecretString("MySecret".to_owned()));
+
+    let returned_value = new_secret.expose_secret(|exposed_secret| {
+        let returned_value = UseSecret::new((*exposed_secret).to_owned());
+        returned_value
+    });
+    assert_eq!(returned_value.inner, SecretString("MySecret".to_owned()));
+
+    let returned_value = new_secret.expose_secret(|exposed_secret| {
+        let returned_value = UseSecret::new((*exposed_secret).to_owned());
+        returned_value
+    });
+    assert_eq!(returned_value.inner, SecretString("MySecret".to_owned()));
+
+    let returned_value = new_secret.expose_secret(|exposed_secret| {
+        let returned_value = UseSecret::new((*exposed_secret).to_owned());
+        returned_value
+    });
+    assert_eq!(returned_value.inner, SecretString("MySecret".to_owned()));
+}
+
+#[cfg(feature = "cloneable-secret")]
+#[test]
+fn test_clone_1() {
+    use crate::common::UseSecret;
+    let new_secret: RTSecret<_, U2> = RTSecret::new(69);
+
+    let returned_value = new_secret.expose_secret(|exposed_secret| {
+        let returned_value = UseSecret::new(*exposed_secret);
+        returned_value
+    });
+    assert_eq!(69, returned_value.inner);
+
+    let cloned_secret = new_secret.clone();
+    let returned_value = cloned_secret.expose_secret(|exposed_secret| {
+        let returned_value = UseSecret::new(*exposed_secret);
+        returned_value
+    });
+    assert_eq!(69, returned_value.inner);
+}
+
+#[test]
+fn test_with_new() {
+    use crate::common::UseSecret;
+    use sosecrets_rs::prelude::typenum::U5;
+    use std::env;
+    #[cfg(feature = "zeroize")]
+    use zeroize::Zeroize;
+
+    #[derive(Clone, Debug, PartialEq)]
+    struct SecretString(String);
+
+    #[cfg(feature = "zeroize")]
+    impl Zeroize for SecretString {
+        fn zeroize(&mut self) {
+            self.0.zeroize();
+        }
+    }
+
+    let new_secret: RTSecret<SecretString, U5> = RTSecret::new_with(|| {
+        SecretString(
+            env::var("CARGO_TARGET_DIR")
+                .unwrap_or("MySecret".to_string())
+                .to_string(),
+        )
+    });
+
+    let returned_value = new_secret.expose_secret(|exposed_secret| {
+        let returned_value = UseSecret::new((*exposed_secret).to_owned());
+        returned_value
+    });
+    assert_eq!(
+        returned_value.inner,
+        SecretString(env::var("CARGO_TARGET_DIR").unwrap_or("MySecret".to_string()))
+    );
+
+    let returned_value = new_secret.expose_secret(|exposed_secret| {
+        let returned_value = UseSecret::new((*exposed_secret).to_owned());
+        returned_value
+    });
+    assert_eq!(
+        returned_value.inner,
+        SecretString(env::var("CARGO_TARGET_DIR").unwrap_or("MySecret".to_string()))
+    );
+
+    let returned_value = new_secret.expose_secret(|exposed_secret| {
+        let returned_value = UseSecret::new((*exposed_secret).to_owned());
+        returned_value
+    });
+    assert_eq!(
+        returned_value.inner,
+        SecretString(env::var("CARGO_TARGET_DIR").unwrap_or("MySecret".to_string()))
+    );
+}
+
+#[cfg(feature = "cloneable-secret")]
+#[test]
+fn test_with_new_cloneable_secret() {
+    use crate::common::UseSecret;
+    use sosecrets_rs::prelude::typenum::U5;
+    use std::env;
+    #[cfg(feature = "zeroize")]
+    use zeroize::Zeroize;
+
+    #[derive(Clone, Debug, PartialEq)]
+    struct SecretString(String);
+
+    #[cfg(feature = "zeroize")]
+    impl Zeroize for SecretString {
+        fn zeroize(&mut self) {
+            self.0.zeroize();
+        }
+    }
+
+    let new_secret: RTSecret<SecretString, U5> = RTSecret::new_with(|| {
+        SecretString(
+            env::var("CARGO_TARGET_DIR")
+                .unwrap_or("MySecret".to_string())
+                .to_string(),
+        )
+    });
+
+    let returned_value = new_secret.expose_secret(|exposed_secret| {
+        let returned_value = UseSecret::new((*exposed_secret).to_owned());
+        returned_value
+    });
+    assert_eq!(
+        returned_value.inner,
+        SecretString(env::var("CARGO_TARGET_DIR").unwrap_or("MySecret".to_string()))
+    );
+
+    let returned_value = new_secret.expose_secret(|exposed_secret| {
+        let returned_value = UseSecret::new((*exposed_secret).to_owned());
+        returned_value
+    });
+    assert_eq!(
+        returned_value.inner,
+        SecretString(env::var("CARGO_TARGET_DIR").unwrap_or("MySecret".to_string()))
+    );
+
+    let returned_value = new_secret.expose_secret(|exposed_secret| {
+        let returned_value = UseSecret::new((*exposed_secret).to_owned());
+        returned_value
+    });
+    assert_eq!(
+        returned_value.inner,
+        SecretString(env::var("CARGO_TARGET_DIR").unwrap_or("MySecret".to_string()))
+    );
+}
+
+#[cfg(feature = "alloc")]
+#[test]
+fn test_with_new_alloc() {
+    use crate::common::UseSecret;
+    use sosecrets_rs::prelude::typenum::U5;
+    use std::env;
+    use zeroize::Zeroize;
+
+    #[derive(Clone, Debug, PartialEq)]
+    struct SecretString(String);
+
+    impl Zeroize for SecretString {
+        fn zeroize(&mut self) {
+            self.0.zeroize();
+        }
+    }
+
+    let new_secret: RTSecret<SecretString, U5> = RTSecret::new_with(|| {
+        SecretString(
+            env::var("CARGO_TARGET_DIR")
+                .unwrap_or("MySecret".to_string())
+                .to_string(),
+        )
+    });
+
+    let returned_value = new_secret.expose_secret(|exposed_secret| {
+        let returned_value = UseSecret::new((*exposed_secret).to_owned());
+        returned_value
+    });
+    assert_eq!(
+        returned_value.inner,
+        SecretString(env::var("CARGO_TARGET_DIR").unwrap_or("MySecret".to_string()))
+    );
+
+    let returned_value = new_secret.expose_secret(|exposed_secret| {
+        let returned_value = UseSecret::new((*exposed_secret).to_owned());
+        returned_value
+    });
+    assert_eq!(
+        returned_value.inner,
+        SecretString(env::var("CARGO_TARGET_DIR").unwrap_or("MySecret".to_string()))
+    );
+
+    let returned_value = new_secret.expose_secret(|exposed_secret| {
+        let returned_value = UseSecret::new((*exposed_secret).to_owned());
+        returned_value
+    });
+    assert_eq!(
+        returned_value.inner,
+        SecretString(env::var("CARGO_TARGET_DIR").unwrap_or("MySecret".to_string()))
+    );
+}
+
+#[test]
+fn test_scoped_threads() {
+    use std::thread::scope;
+
+    let new_secret = RTSecret::<i32, U2>::new_with(|| 69);
+    let new_secret_two = RTSecret::<String, U2>::new_with(|| "69".to_owned());
+
+    scope(|s| {
+        s.spawn(move || {
+            let returned_value = new_secret.expose_secret(|exposed_secret| *exposed_secret);
+            assert_eq!(69, returned_value);
+            let returned_value = new_secret.expose_secret(|exposed_secret| *exposed_secret);
+            assert_eq!(69, returned_value);
+        });
+        s.spawn(move || {
+            let returned_value =
+                new_secret_two.expose_secret(|exposed_secret| exposed_secret.to_owned());
+            assert_eq!("69".to_owned(), returned_value);
+            let returned_value =
+                new_secret_two.expose_secret(|exposed_secret| exposed_secret.to_owned());
+            assert_eq!("69".to_owned(), returned_value);
+        });
+    });
+}
+
+#[test]
+fn test_scoped_threads_the_other_way_round() {
+    use std::thread::scope;
+
+    let new_secret = RTSecret::<i32, U2>::new_with(|| 69);
+
+    let _ = new_secret.expose_secret(|exposed_secret| {
+        scope(|s| {
+            let scope_handler = s.spawn(move || *exposed_secret);
+            let result = scope_handler.join();
+            assert_eq!(result.unwrap(), 69);
+        });
+    });
 }

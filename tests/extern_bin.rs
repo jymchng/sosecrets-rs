@@ -383,47 +383,10 @@ fn test_panic() {
     assert_eq!(opt.unwrap(), 69);
 }
 
-#[cfg(feature = "debug-secret")]
-struct Comparator<'a> {
-    valid: bool,
-    to_compare: &'a str,
-}
-
-#[cfg(feature = "debug-secret")]
-impl<'a> Comparator<'a> {
-    fn new(s: &'a str) -> Self {
-        Self {
-            valid: true,
-            to_compare: s,
-        }
-    }
-
-    fn is_valid(self) -> bool {
-        self.valid && self.to_compare.is_empty()
-    }
-}
-
-#[cfg(feature = "debug-secret")]
-impl<'a> Write for Comparator<'a> {
-    fn write_str(&mut self, s: &str) -> Result<(), core::fmt::Error> {
-        if s.eq(self.to_compare) {
-            self.valid = self.valid && true;
-            self.to_compare = "";
-            return Ok(());
-        }
-
-        if self.to_compare.starts_with(s) && self.to_compare.len() >= s.len() {
-            self.to_compare = &self.to_compare[s.len()..];
-        } else {
-            self.valid = false
-        }
-        Ok(())
-    }
-}
-
 #[test]
 #[cfg(feature = "debug-secret")]
 fn test_debug_secret_one() {
+    use common;
     use sosecrets_rs::traits::DebugSecret;
     #[cfg(feature = "zeroize")]
     use zeroize::Zeroize;
@@ -444,7 +407,7 @@ fn test_debug_secret_one() {
 
     let a = A { _inner: 69 };
 
-    let mut cmp = Comparator::new("Secret<[REDACTED]>");
+    let mut cmp = common::Comparator::new("Secret<[REDACTED]>");
 
     let new_secret: Secret<A, U5> = Secret::new(a.clone());
     let _ = write!(&mut cmp, "{:?}", new_secret);
