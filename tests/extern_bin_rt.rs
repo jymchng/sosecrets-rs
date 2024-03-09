@@ -1,6 +1,6 @@
 use sosecrets_rs::{
     prelude::typenum::{U0, U1, U2},
-    runtime::{traits::RTExposeSecret, RTExposedSecret, RTSecret},
+    runtime::{traits::RTExposeSecret, RTExposedSecret, RTSecret, SecrecySecret},
 };
 mod common;
 
@@ -72,15 +72,43 @@ fn test_expose_secret_runtime_two() {
         assert_eq!(*exposed_secret, 69);
     });
 
-    let _ = secret_one.expose_secret(|exposed_secret| {
+    let result = secret_one.try_expose_secret(|exposed_secret| {
         assert_eq!(*exposed_secret, 69);
     });
 
-    let _ = secret_one.expose_secret(|exposed_secret| {
+    assert!(result.is_ok());
+
+    let result = secret_one.try_expose_secret(|exposed_secret| {
         assert_eq!(*exposed_secret, 69);
     });
+
+    assert!(result.is_ok());
 
     assert_eq!(secret_one.exposure_count(), 4_u8);
+
+    let result = secret_one.try_expose_secret(|exposed_secret| {
+        assert_eq!(*exposed_secret, 69);
+    });
+
+    assert!(result.is_err());
+
+    let result = secret_one.try_expose_secret(|exposed_secret| {
+        assert_eq!(*exposed_secret, 69);
+    });
+
+    assert!(result.is_err());
+
+    let result = secret_one.try_expose_secret(|exposed_secret| {
+        assert_eq!(*exposed_secret, 69);
+    });
+
+    assert!(result.is_err());
+
+    let result = secret_one.try_expose_secret(|exposed_secret| {
+        assert_eq!(*exposed_secret, 69);
+    });
+
+    assert!(result.is_err());
 }
 
 #[test]
@@ -88,6 +116,24 @@ fn test_size_of_unchecked_secret() {
     use core::mem::size_of;
 
     assert_eq!(size_of::<RTSecret<isize, U0>>(), size_of::<isize>());
+    assert_eq!(size_of::<SecrecySecret<isize>>(), size_of::<isize>());
+}
+
+#[test]
+fn test_secrecy_secret_can_expose_secret_infinitely() {
+    let secrecy_secret_one = SecrecySecret::<isize>::new(69);
+
+    for _ in 0..=100_000 {
+        let _ = secrecy_secret_one.expose_secret(|exposed_secret| {
+            assert_eq!(*exposed_secret, 69);
+        });
+
+        let result = secrecy_secret_one.try_expose_secret(|exposed_secret| {
+            assert_eq!(*exposed_secret, 69);
+        });
+
+        assert!(result.is_ok());
+    }
 }
 
 #[test]

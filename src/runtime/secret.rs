@@ -1,5 +1,6 @@
 use core::{
     cell::Cell,
+    convert::Infallible,
     fmt::Debug,
     marker::PhantomData,
     ops::{Deref, Drop},
@@ -7,7 +8,7 @@ use core::{
 
 use crate::{
     runtime::{error, traits},
-    traits::{ChooseMinimallyRepresentableUInt, __private},
+    traits::{ChooseMinimallyRepresentableUInt, NumericalZeroSizedType, __private},
 };
 use typenum::{IsGreater, True, Unsigned, U0};
 #[cfg(feature = "zeroize")]
@@ -31,6 +32,40 @@ pub struct RTSecret<
 /// indicating the lifetime of the wrapper type, which is strictly a subtype of the lifetime of the secret and cannot be coerced to be any other lifetime.
 pub struct RTExposedSecret<'brand, T>(T, PhantomData<fn(&'brand ()) -> &'brand ()>);
 
+pub type SecrecySecret<T> = RTSecret<T, NumericalZeroSizedType>;
+
+impl<'secret, #[cfg(feature = "zeroize")] T: Zeroize, #[cfg(not(feature = "zeroize"))] T>
+    traits::RTExposeSecret<'secret, &'secret T, Infallible>
+    for RTSecret<T, NumericalZeroSizedType>
+{
+    type Exposed<'brand> = RTExposedSecret<'brand, &'brand T>
+    where
+        'secret: 'brand;
+
+    #[inline(always)]
+    fn expose_secret<ReturnType, ClosureType>(&self, scope: ClosureType) -> ReturnType
+    where
+        for<'brand> ClosureType: FnOnce(RTExposedSecret<'brand, &'brand T>) -> ReturnType,
+    {
+        match self.try_expose_secret(scope) {
+            Ok(returned_value) => returned_value,
+            Err(_) => {
+                unreachable!("Impossible to return error since there is no check at all!");
+            }
+        }
+    }
+
+    fn try_expose_secret<ReturnType, ClosureType>(
+        &self,
+        scope: ClosureType,
+    ) -> Result<ReturnType, Infallible>
+    where
+        for<'brand> ClosureType: FnOnce(RTExposedSecret<'brand, &'brand T>) -> ReturnType,
+    {
+        Ok(scope(RTExposedSecret(&self.0, PhantomData)))
+    }
+}
+
 impl<'brand, T> Deref for RTExposedSecret<'brand, &'brand T> {
     type Target = T;
     fn deref(&self) -> &Self::Target {
@@ -41,7 +76,7 @@ impl<'brand, T> Deref for RTExposedSecret<'brand, &'brand T> {
 impl<
         #[cfg(feature = "zeroize")] T: Zeroize,
         #[cfg(not(feature = "zeroize"))] T,
-        MEC: ChooseMinimallyRepresentableUInt + Unsigned,
+        MEC: ChooseMinimallyRepresentableUInt,
     > RTSecret<T, MEC>
 {
     #[inline(always)]
