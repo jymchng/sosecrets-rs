@@ -14,7 +14,8 @@ mod macros;
 mod secret;
 
 pub mod traits;
+pub mod types;
 
 pub mod prelude {
-    pub use crate::secret::*;
+    pub use crate::{runtime::*, secret::*, types::*};
 }

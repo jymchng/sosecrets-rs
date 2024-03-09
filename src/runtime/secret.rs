@@ -8,7 +8,8 @@ use core::{
 
 use crate::{
     runtime::{error, traits},
-    traits::{ChooseMinimallyRepresentableUInt, NumericalZeroSizedType, __private},
+    traits::{ChooseMinimallyRepresentableUInt, __private},
+    types::NumericalZeroSizedType,
 };
 use typenum::{IsGreater, True, Unsigned, U0};
 #[cfg(feature = "zeroize")]

@@ -1,4 +1,7 @@
-use crate::macros::{impl_choose_int, impl_sealed_trait_for_uint};
+use crate::{
+    macros::{impl_choose_int, impl_sealed_trait_for_uint},
+    types::NumericalZeroSizedType,
+};
 use core::{
     cmp::PartialOrd,
     fmt::{Debug, Display},
@@ -165,6 +168,8 @@ impl_sealed_trait_for_uint!(u8, u16, u32, u64, u128);
 
 /// A trait for types that can choose the minimally representable unsigned integer.
 pub trait ChooseMinimallyRepresentableUInt: __private::SealedTrait {
+    /// The Rust's primitive unsigned integer type that is minimally representable of the unsigned integer represented at the type level by `Self`.
+    /// e.g. If `Self` is `typenum::consts::U69`, then `Self::Output` is `u8`.
     type Output: AddAssign
         + Add<Self::Output, Output = Self::Output>
         + PartialOrd
@@ -177,14 +182,20 @@ pub trait ChooseMinimallyRepresentableUInt: __private::SealedTrait {
         + Clone
         + Hash
         + Default;
+    /// Currently, a placeholder for future feature of this crate. Safe to put a placeholder here because this is a 'Sealed' trait.
     type AtomicOutput;
+    /// The additive identity of the type `Self::Output`, e.g. `0_usize`, `0_u32`.
     const ZERO: Self::Output;
+    /// The multiplicative identity of the type `Self::Output`, e.g. `1_usize`, `1_u32`.
     const ONE: Self::Output;
 
+    /// A convenient method to convert the unsigned integer represented at the type level by `Self` to a value of type `Self::Output`.
+    /// e.g. converting from `typenum::consts::U69` to `69_u8`.
     fn cast_unsigned_to_self_type<T: Unsigned>(_: __private::SealedToken) -> Self::Output;
 }
 
 /// A trait for types that can be converted to their atomic representation.
+/// Currently, a placeholder for future feature of this crate. Safe to put a placeholder here because this is a 'Sealed' trait.
 pub trait AsAtomic: __private::SealedTrait {
     type Output;
 }
@@ -320,41 +331,6 @@ impl ChooseMinimallyRepresentableUInt for U0 {
 
     fn cast_unsigned_to_self_type<T: Unsigned>(_: __private::SealedToken) -> Self::Output {
         NumericalZeroSizedType {}
-    }
-}
-
-impl __private::SealedTrait for NumericalZeroSizedType {}
-
-impl ChooseMinimallyRepresentableUInt for NumericalZeroSizedType {
-    type Output = NumericalZeroSizedType;
-    type AtomicOutput = NumericalZeroSizedType;
-
-    const ZERO: Self::Output = NumericalZeroSizedType {};
-    const ONE: Self::Output = NumericalZeroSizedType {};
-
-    fn cast_unsigned_to_self_type<T: Unsigned>(_: __private::SealedToken) -> Self::Output {
-        NumericalZeroSizedType {}
-    }
-}
-
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Default)]
-pub struct NumericalZeroSizedType {}
-
-impl core::ops::AddAssign<Self> for NumericalZeroSizedType {
-    fn add_assign(&mut self, _other: Self) {}
-}
-
-impl core::ops::Add<Self> for NumericalZeroSizedType {
-    type Output = Self;
-
-    fn add(self, _other: Self) -> Self::Output {
-        NumericalZeroSizedType {}
-    }
-}
-
-impl core::fmt::Display for NumericalZeroSizedType {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "NumericalZeroSizedType")
     }
 }
 
