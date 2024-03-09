@@ -21,7 +21,7 @@ use crate::traits::DebugSecret;
 pub struct RTSecret<
     #[cfg(feature = "zeroize")] T: Zeroize,
     #[cfg(not(feature = "zeroize"))] T,
-    MEC: ChooseMinimallyRepresentableUInt + Unsigned,
+    MEC: ChooseMinimallyRepresentableUInt,
 >(T, Cell<<MEC as ChooseMinimallyRepresentableUInt>::Output>);
 
 /// A wrapper type representing an exposed secret.
@@ -185,7 +185,7 @@ impl<
 impl<
         #[cfg(feature = "zeroize")] T: Zeroize,
         #[cfg(not(feature = "zeroize"))] T,
-        MEC: ChooseMinimallyRepresentableUInt + Unsigned,
+        MEC: ChooseMinimallyRepresentableUInt,
     > Drop for RTSecret<T, MEC>
 {
     /// Zeroizes the secret value when dropped if the `zeroize` feature is enabled.
