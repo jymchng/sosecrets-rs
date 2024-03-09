@@ -178,7 +178,7 @@ pub trait ChooseMinimallyRepresentableUInt: __private::SealedTrait {
         + Hash
         + Default;
     type AtomicOutput;
-    const MIN: Self::Output;
+    const ZERO: Self::Output;
     const ONE: Self::Output;
 
     fn cast_unsigned_to_self_type<T: Unsigned>(_: __private::SealedToken) -> Self::Output;
@@ -315,7 +315,7 @@ impl ChooseMinimallyRepresentableUInt for U0 {
     type Output = NumericalZeroSizedType;
     type AtomicOutput = NumericalZeroSizedType;
 
-    const MIN: Self::Output = NumericalZeroSizedType {};
+    const ZERO: Self::Output = NumericalZeroSizedType {};
     const ONE: Self::Output = NumericalZeroSizedType {};
 
     fn cast_unsigned_to_self_type<T: Unsigned>(_: __private::SealedToken) -> Self::Output {
@@ -329,7 +329,7 @@ impl ChooseMinimallyRepresentableUInt for NumericalZeroSizedType {
     type Output = NumericalZeroSizedType;
     type AtomicOutput = NumericalZeroSizedType;
 
-    const MIN: Self::Output = NumericalZeroSizedType {};
+    const ZERO: Self::Output = NumericalZeroSizedType {};
     const ONE: Self::Output = NumericalZeroSizedType {};
 
     fn cast_unsigned_to_self_type<T: Unsigned>(_: __private::SealedToken) -> Self::Output {

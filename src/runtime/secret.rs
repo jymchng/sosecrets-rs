@@ -55,6 +55,7 @@ impl<'secret, #[cfg(feature = "zeroize")] T: Zeroize, #[cfg(not(feature = "zeroi
         }
     }
 
+    #[inline(always)]
     fn try_expose_secret<ReturnType, ClosureType>(
         &self,
         scope: ClosureType,
@@ -81,14 +82,17 @@ impl<
 {
     #[inline(always)]
     pub const fn new(t: T) -> Self {
-        Self(t, Cell::new(<MEC as ChooseMinimallyRepresentableUInt>::MIN))
+        Self(
+            t,
+            Cell::new(<MEC as ChooseMinimallyRepresentableUInt>::ZERO),
+        )
     }
 
     #[inline(always)]
     pub fn new_with(f: impl FnOnce() -> T) -> Self {
         Self(
             f(),
-            Cell::new(<MEC as ChooseMinimallyRepresentableUInt>::MIN),
+            Cell::new(<MEC as ChooseMinimallyRepresentableUInt>::ZERO),
         )
     }
 
