@@ -60,6 +60,30 @@ fn test_expose_secret_runtime() {
 }
 
 #[test]
+fn test_expose_secret_runtime_two() {
+    use sosecrets_rs::prelude::typenum::Sum;
+    let secret_one = RTSecret::<isize, Sum<U2, U2>>::new(69);
+
+    let _ = secret_one.expose_secret(|exposed_secret| {
+        assert_eq!(*exposed_secret, 69);
+    });
+
+    let _ = secret_one.expose_secret(|exposed_secret| {
+        assert_eq!(*exposed_secret, 69);
+    });
+
+    let _ = secret_one.expose_secret(|exposed_secret| {
+        assert_eq!(*exposed_secret, 69);
+    });
+
+    let _ = secret_one.expose_secret(|exposed_secret| {
+        assert_eq!(*exposed_secret, 69);
+    });
+
+    assert_eq!(secret_one.exposure_count(), 4_u8);
+}
+
+#[test]
 fn test_size_of_unchecked_secret() {
     use core::mem::size_of;
 

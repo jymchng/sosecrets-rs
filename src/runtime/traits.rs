@@ -1,8 +1,4 @@
-pub use crate::runtime::error;
-
-use crate::traits::ChooseMinimallyRepresentableUInt;
-
-pub trait RTExposeSecret<'secret, T, MEC: ChooseMinimallyRepresentableUInt> {
+pub trait RTExposeSecret<'secret, T, ErrorType: core::fmt::Display + core::fmt::Debug> {
     type Exposed<'brand>
     where
         'secret: 'brand;
@@ -14,7 +10,7 @@ pub trait RTExposeSecret<'secret, T, MEC: ChooseMinimallyRepresentableUInt> {
     fn try_expose_secret<ReturnType, ClosureType>(
         &self,
         scope: ClosureType,
-    ) -> Result<ReturnType, error::ExposeSecretError<MEC>>
+    ) -> Result<ReturnType, ErrorType>
     where
         for<'brand> ClosureType: FnOnce(Self::Exposed<'brand>) -> ReturnType;
 }
