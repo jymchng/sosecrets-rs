@@ -43,6 +43,64 @@ impl<'secret, #[cfg(feature = "zeroize")] T: Zeroize, #[cfg(not(feature = "zeroi
     where
         'secret: 'brand;
 
+    /// Exposes the secret **without** any runtime checking that the exposure count is not more than the maximally allowed exposure count represented by the type parameter `MEC`.
+    /// Note: It is impossible to return the 'exposed secret' as the return value of the closure.
+    ///
+    /// Example:
+    /// ```rust
+    /// use sosecrets_rs::{
+    ///     prelude::{typenum::U2, SecrecySecret, RTSecret},
+    ///     runtime::traits::RTExposeSecret,
+    /// };
+    /// #[cfg(feature = "zeroize")]
+    /// use zeroize::Zeroize;
+    ///
+    /// struct A {
+    ///     inner: i32,
+    /// }
+    ///
+    /// #[cfg(feature = "zeroize")]
+    /// impl Zeroize for A {
+    ///     fn zeroize(&mut self) {
+    ///         self.inner.zeroize()
+    ///     }
+    /// }
+    ///
+    /// let secret_one = SecrecySecret::<A>::new(A { inner: 69 });
+    /// let returned_value = secret_one.expose_secret(|exposed_secret| A { inner: (*exposed_secret).inner + 1});
+    /// assert_eq!(returned_value.inner, 70);
+    /// ```
+    ///
+    /// Example (this does **NOT** compile):
+    /// ```compile_fail
+    /// use sosecrets_rs::{
+    ///     prelude::{typenum::U2, SecrecySecret, RTSecret},
+    ///     runtime::traits::RTExposeSecret,
+    /// };
+    /// #[cfg(feature = "zeroize")]
+    /// use zeroize::Zeroize;
+    ///
+    /// struct A {
+    ///     inner: i32,
+    /// }
+    ///
+    /// #[cfg(feature = "zeroize")]
+    /// impl Zeroize for A {
+    ///     fn zeroize(&mut self) {
+    ///         self.inner.zeroize()
+    ///     }
+    /// }
+    ///
+    /// let secret_one = SecrecySecret::<A>::new(A { inner: 69 });
+    /// let _ = secret_one.expose_secret(|exposed_secret| exposed_secret);
+    /// let _ = secret_one.expose_secret(|exposed_secret| *exposed_secret); // Only if T is not `Copy`
+    /// ```
+    ///
+    /// # Parameters
+    /// - `self`.
+    /// - `scope`: A closure that takes the exposed secret and returns a value of the `ReturnType`.
+    /// # Returns
+    /// A value of type `ReturnType` which is the type of the returned value from the closure named `scope`.
     #[inline(always)]
     fn expose_secret<ReturnType, ClosureType>(&self, scope: ClosureType) -> ReturnType
     where
@@ -56,6 +114,64 @@ impl<'secret, #[cfg(feature = "zeroize")] T: Zeroize, #[cfg(not(feature = "zeroi
         }
     }
 
+    /// Exposes the secret **without** any runtime checking that the exposure count is not more than the maximally allowed exposure count represented by the type parameter `MEC`.
+    /// Note: It is impossible to return the 'exposed secret' as the return value of the closure.
+    ///
+    /// Example:
+    /// ```rust
+    /// use sosecrets_rs::{
+    ///     prelude::{typenum::U2, SecrecySecret, RTSecret},
+    ///     runtime::traits::RTExposeSecret,
+    /// };
+    /// #[cfg(feature = "zeroize")]
+    /// use zeroize::Zeroize;
+    ///
+    /// struct A {
+    ///     inner: i32,
+    /// }
+    ///
+    /// #[cfg(feature = "zeroize")]
+    /// impl Zeroize for A {
+    ///     fn zeroize(&mut self) {
+    ///         self.inner.zeroize()
+    ///     }
+    /// }
+    ///
+    /// let secret_one = SecrecySecret::<A>::new(A { inner: 69 });
+    /// let returned_value = secret_one.try_expose_secret(|exposed_secret| A { inner: (*exposed_secret).inner + 1});
+    /// assert!(returned_value.is_ok());
+    /// ```
+    ///
+    /// Example (this does **NOT** compile):
+    /// ```compile_fail
+    /// use sosecrets_rs::{
+    ///     prelude::typenum::U2,
+    ///     runtime::{secret::RTSecret, traits::RTExposeSecret},
+    /// };
+    /// #[cfg(feature = "zeroize")]
+    /// use zeroize::Zeroize;
+    ///
+    /// struct A {
+    ///     inner: i32,
+    /// }
+    ///
+    /// #[cfg(feature = "zeroize")]
+    /// impl Zeroize for A {
+    ///     fn zeroize(&mut self) {
+    ///         self.inner.zeroize()
+    ///     }
+    /// }
+    ///
+    /// let secret_one = SecrecySecret::<A>::new(A { inner: 69 });
+    /// let _ = secret_one.try_expose_secret(|exposed_secret| exposed_secret);
+    /// let _ = secret_one.try_expose_secret(|exposed_secret| *exposed_secret); // Only if T is not `Copy`
+    /// ```
+    ///
+    /// # Parameters
+    /// - `self`.
+    /// - `scope`: A closure that takes the exposed secret and returns a value of the `ReturnType`.
+    /// # Returns
+    /// A value of type `ReturnType` which is the type of the returned value from the closure named `scope`.
     #[inline(always)]
     fn try_expose_secret<ReturnType, ClosureType>(
         &self,
@@ -81,6 +197,13 @@ impl<
         MEC: ChooseMinimallyRepresentableUInt,
     > RTSecret<T, MEC>
 {
+    /// Creates a new `RTSecret` with the provided secret value `t`.
+    ///
+    /// # Parameters
+    /// - `t`: The secret value.
+    ///
+    /// # Returns
+    /// The newly created `RTSecret`.
     #[inline(always)]
     pub const fn new(t: T) -> Self {
         Self(
@@ -89,6 +212,13 @@ impl<
         )
     }
 
+    /// Creates a new `RTSecret` with the provided secret value returned by the closure `f`.
+    ///
+    /// # Parameters
+    /// - `f`: A closure that returns the secret value.
+    ///
+    /// # Returns
+    /// The newly created `RTSecret`.
     #[inline(always)]
     pub fn new_with(f: impl FnOnce() -> T) -> Self {
         Self(
@@ -125,7 +255,7 @@ impl<
     /// Note: It is impossible to return the 'exposed secret' as the return value of the closure.
     ///
     /// Example:
-    /// ```compile_fail
+    /// ```rust
     /// use sosecrets_rs::{
     ///     prelude::typenum::U2,
     ///     runtime::{secret::RTSecret, traits::RTExposeSecret},
@@ -145,33 +275,9 @@ impl<
     /// }
     ///
     /// let secret_one = RTSecret::<A, U2>::new(A { inner: 69 });
-    /// let _ = secret_one.expose_secret(|exposed_secret| exposed_secret);
-    /// let _ = secret_one.expose_secret(|exposed_secret| *exposed_secret);
+    /// let returned_value = secret_one.expose_secret(|exposed_secret| A { inner: (*exposed_secret).inner + 1});
+    /// assert_eq!(returned_value.inner, 70);
     /// ```
-    ///
-    /// # Parameters
-    /// - `self`.
-    /// - `scope`: A closure that takes the exposed secret and returns a value of the `ReturnType`.
-    ///
-    /// # Panics
-    /// This function panics only if the secret is exposed more than the maximally allowed exposure count represented by the type parameter `MEC`.
-    ///
-    /// Returns the value returned by the closure.
-    #[inline(always)]
-    fn expose_secret<ReturnType, ClosureType>(&self, scope: ClosureType) -> ReturnType
-    where
-        for<'brand> ClosureType: FnOnce(RTExposedSecret<'brand, &'brand T>) -> ReturnType,
-    {
-        match self.try_expose_secret(scope) {
-            Ok(returned_value) => returned_value,
-            Err(error::ExposeSecretError::ExposeMoreThanMaximallyAllow(err)) => {
-                panic!("`RTSecret` has already been exposed for {} times, the maximum number it is allowed to be exposed for is {} times.", err.ec, err.mec)
-            }
-        }
-    }
-
-    /// Exposes the `Result` containing `Ok(secret)`, with runtime checking that the exposure count is not more than the maximally allowed exposure count represented by the type parameter `MEC`.
-    /// Note: It is impossible to return the 'exposed secret' as the return value of the closure.
     ///
     /// Example:
     /// ```compile_fail
@@ -194,8 +300,83 @@ impl<
     /// }
     ///
     /// let secret_one = RTSecret::<A, U2>::new(A { inner: 69 });
+    /// let _ = secret_one.expose_secret(|exposed_secret| exposed_secret);
+    /// let _ = secret_one.expose_secret(|exposed_secret| *exposed_secret); // Only if T is not `Copy`
+    /// ```
+    ///
+    /// # Parameters
+    /// - `self`.
+    /// - `scope`: A closure that takes the exposed secret and returns a value of the `ReturnType`.
+    ///
+    /// # Panics
+    /// This function panics only if the secret is exposed more than the maximally allowed exposure count represented by the type parameter `MEC`.
+    ///
+    /// # Returns
+    /// A value of type `ReturnType` which is the type of the returned value from the closure named `scope`.
+    #[inline(always)]
+    fn expose_secret<ReturnType, ClosureType>(&self, scope: ClosureType) -> ReturnType
+    where
+        for<'brand> ClosureType: FnOnce(RTExposedSecret<'brand, &'brand T>) -> ReturnType,
+    {
+        match self.try_expose_secret(scope) {
+            Ok(returned_value) => returned_value,
+            Err(error::ExposeSecretError::ExposeMoreThanMaximallyAllow(err)) => {
+                panic!("`RTSecret` has already been exposed for {} times, the maximum number it is allowed to be exposed for is {} times.", err.ec, err.mec)
+            }
+        }
+    }
+
+    /// Return the `Result` containing `Ok(scope(exposed_secret))`, with runtime checking that the exposure count is not more than the maximally allowed exposure count represented by the type parameter `MEC`.
+    /// Note: It is impossible to return the 'exposed secret' as the return value of the closure.
+    ///
+    /// Example:
+    /// ```rust
+    /// use sosecrets_rs::{
+    ///     prelude::{typenum::U2, RTSecret},
+    ///     runtime::traits::RTExposeSecret,
+    /// };
+    /// #[cfg(feature = "zeroize")]
+    /// use zeroize::Zeroize;
+    ///
+    /// struct A {
+    ///     inner: i32,
+    /// }
+    ///
+    /// #[cfg(feature = "zeroize")]
+    /// impl Zeroize for A {
+    ///     fn zeroize(&mut self) {
+    ///         self.inner.zeroize()
+    ///     }
+    /// }
+    ///
+    /// let secret_one = RTSecret::<A, U2>::new(A { inner: 69 });
+    /// let returned_value = secret_one.try_expose_secret(|exposed_secret| A { inner: (*exposed_secret).inner + 1});
+    /// assert!(returned_value.is_ok());
+    /// ```
+    ///
+    /// Example (this example will **not** compile):
+    /// ```compile_fail
+    /// use sosecrets_rs::{
+    ///     prelude::typenum::U2,
+    ///     runtime::{secret::RTSecret, traits::RTExposeSecret},
+    /// };
+    /// #[cfg(feature = "zeroize")]
+    /// use zeroize::Zeroize;
+    ///
+    /// struct A {
+    ///     inner: i32,
+    /// }
+    ///
+    /// #[cfg(feature = "zeroize")]
+    /// impl Zeroize for A {
+    ///     fn zeroize(&mut self) {
+    ///         self.inner.zeroize()
+    ///     }
+    /// }
+    ///
+    /// let secret_one = RTSecret::<A, U2>::new(A { inner: 69 });
     /// let _ = secret_one.try_expose_secret(|exposed_secret| exposed_secret);
-    /// let _ = secret_one.try_expose_secret(|exposed_secret| *exposed_secret);
+    /// let _ = secret_one.try_expose_secret(|exposed_secret| *exposed_secret); // Only if T is not `Copy`
     /// ```
     ///
     /// # Parameters
@@ -203,7 +384,9 @@ impl<
     /// - `scope`: A closure that takes the exposed secret and returns a value of the `ReturnType`.
     ///
     ///
-    /// Returns the Result containing the value returned by the closure, else if the number of exposed count is larger than what is maximally allowed for, it returns an error of type `ExposeSecretError`.
+    /// # Returns
+    /// - `Ok`: The value returned by the closure.
+    /// - `Err`: If the exposure count exceeds the maximum allowed, returns an `ExposeSecretError`.
     #[inline(always)]
     fn try_expose_secret<ReturnType, ClosureType>(
         &self,
