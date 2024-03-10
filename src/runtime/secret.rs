@@ -21,18 +21,26 @@ use crate::traits::CloneableSecret;
 #[cfg(feature = "debug-secret")]
 use crate::traits::DebugSecret;
 
+/// A runtime secret with optional zeroization for the type `T` and exposure count tracking. It is the runtime version of `Secret<T, MEC, EC>`.
 pub struct RTSecret<
     #[cfg(feature = "zeroize")] T: Zeroize,
     #[cfg(not(feature = "zeroize"))] T,
     MEC: ChooseMinimallyRepresentableUInt,
->(T, Cell<<MEC as ChooseMinimallyRepresentableUInt>::Output>);
+>(
+    /// `T` is the type of the value that is meant to be kept as a secret,
+    T,
+    /// The type of the exposure counter, can be either `u8`, `u16`, `u32` or `u64`.
+    Cell<<MEC as ChooseMinimallyRepresentableUInt>::Output>,
+);
 
 /// A wrapper type representing an exposed secret.
 ///
-/// The `RTExposedSecret` struct is a wrapper type representing an exposed secret. It is associated with an invariant lifetime `'brand`,
-/// indicating the lifetime of the wrapper type, which is strictly a subtype of the lifetime of the secret and cannot be coerced to be any other lifetime.
+/// The `RTExposedSecret` struct is a wrapper type representing an exposed secret.
+/// It holds an annotated (`'brand`) [invariant](https://doc.rust-lang.org/nomicon/subtyping.html#variance) lifetime, indicating the lifetime of the wrapper type, which is strictly a subtype of the lifetime of the secret and cannot be coerced to be any other lifetime.
 pub struct RTExposedSecret<'brand, T>(T, PhantomData<fn(&'brand ()) -> &'brand ()>);
 
+/// A convenience alias for `RTSecret` with a secret of type `T` that does **not** conduct any exposure count checking, i.e. the secret can be exposed infinitely many times.
+/// It is meant to function almost identically to `secrecy::Secret`, except that the signature of `.expose_secret(...)` method is different.
 pub type SecrecySecret<T> = RTSecret<T, NumericalZeroSizedType>;
 
 impl<'secret, #[cfg(feature = "zeroize")] T: Zeroize, #[cfg(not(feature = "zeroize"))] T>
@@ -170,8 +178,10 @@ impl<'secret, #[cfg(feature = "zeroize")] T: Zeroize, #[cfg(not(feature = "zeroi
     /// # Parameters
     /// - `self`.
     /// - `scope`: A closure that takes the exposed secret and returns a value of the `ReturnType`.
+    ///
     /// # Returns
-    /// A value of type `ReturnType` which is the type of the returned value from the closure named `scope`.
+    /// An `Ok` variant containing the value of type `ReturnType` which is the type of the returned value from the closure named `scope`.
+    /// This function can **never** fail because no check is done.
     #[inline(always)]
     fn try_expose_secret<ReturnType, ClosureType>(
         &self,

@@ -31,7 +31,8 @@ type AddU1<A> = <A as core::ops::Add<U1>>::Output;
 
 /// The `Secret` struct represents a secure container for managing sensitive values with built-in exposure control.
 ///
-/// It provides a mechanism to limit the number of times a secret can be exposed.
+/// It provides a mechanism to limit the number of times a secret can be exposed at compile time.
+/// Exposure of secret is strictly limited to a lexical scope.
 /// The behavior of the `Secret` type is customizable through various features, such as zeroization, cloning support, and debugging capabilities.
 ///
 /// ## Type Parameters
@@ -123,6 +124,76 @@ impl<
         EC: Add<U1> + Unsigned + IsLessOrEqual<MEC, Output = True>,
         Sum<EC, U1>: Unsigned + IsLessOrEqual<MEC, Output = True> + Add<U1>;
 
+    /// Exposes the secret value to a closure, consuming the `Secret`.
+    /// At compile time, if the type parameter `EC` 'is greater than' `MEC`, calling this method will be a compile error.
+    ///
+    /// Example:
+    /// ```rust
+    /// use sosecrets_rs::{prelude::{Secret, typenum::U2}, traits::ExposeSecret};
+    ///
+    /// struct UseSecret {
+    ///     inner: i32,
+    /// }
+    ///
+    /// impl UseSecret {
+    ///
+    ///     fn new(v: i32) -> Self {
+    ///         Self {
+    ///             inner: v,
+    ///         }
+    ///     }
+    /// }
+    ///
+    /// let new_secret: Secret<_, U2> = Secret::new(69);
+    ///
+    /// let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
+    ///     let returned_value = UseSecret::new(*exposed_secret);
+    ///     returned_value
+    /// });
+    /// assert_eq!(69, returned_value.inner);
+    ///
+    /// let (_new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
+    ///     let returned_value = UseSecret::new(*exposed_secret);
+    ///     returned_value
+    /// });
+    /// assert_eq!(69, returned_value.inner);
+    /// ```
+    ///
+    /// Example (this will **not** compile):
+    /// ```rust,compile_fail
+    /// use sosecrets_rs::{prelude::{Secret, typenum::U2}, traits::ExposeSecret};
+    ///
+    /// struct UseSecret {
+    ///     inner: i32,
+    /// }
+    ///
+    /// impl UseSecret {
+    ///
+    ///     fn new(v: i32) -> Self {
+    ///         Self {
+    ///             inner: v,
+    ///         }
+    ///     }
+    /// }
+    ///
+    /// let (new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
+    ///     let returned_value = UseSecret::new(*exposed_secret);
+    ///     returned_value
+    /// });
+    /// assert_eq!(69, returned_value.inner);
+    ///
+    /// let (_new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
+    ///     let returned_value = UseSecret::new(*exposed_secret);
+    ///     returned_value
+    /// });
+    /// assert_eq!(69, returned_value.inner);
+    ///
+    /// let (_new_secret, returned_value) = new_secret.expose_secret(|exposed_secret| {
+    ///     let returned_value = UseSecret::new(*exposed_secret);
+    ///     returned_value
+    /// });
+    /// ```
+    ///
     #[inline(always)]
     fn expose_secret<ReturnType, ClosureType>(
         mut self,
