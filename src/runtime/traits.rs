@@ -26,7 +26,7 @@ pub trait RTExposeSecret<'secret, T> {
     ///
     /// # Returns
     /// - `Ok`: The value returned by the closure.
-    /// - `Err`: If there is an error during exposure, it returns an error of type `ErrorType`.
+    /// - `Err`: If there is an error during exposure, it returns an error of type `Self::Error`.
     fn try_expose_secret<ReturnType, ClosureType>(
         &self,
         scope: ClosureType,

@@ -23,6 +23,8 @@ It makes use of the [`typenum`](https://github.com/paholg/typenum/tree/main) cra
 
 ## Usage Example
 
+**Compile Time Checks**
+
 ```rust
 use sosecrets_rs::{
   prelude::*,
@@ -35,18 +37,18 @@ let secret = Secret::<_, U2>::new("my_secret_value".to_string());
 
 // Expose the secret and perform some operations with the exposed value; secret has been exposed once: `EC` = 1, `MEC` = 2;
 let (next_secret, exposed_value) = secret.expose_secret(|exposed_secret| {
-    // `exposed_secret` is only 'available' from the next line -------
-    assert_eq!(&*exposed_secret.as_str(), "my_secret_value"); //     ^
-    // Perform operations with the exposed value                     |
-    // ...                                                           v
-    // to this line... -----------------------------------------------
+  // `exposed_secret` is only 'available' from the next line -------
+  assert_eq!(&*exposed_secret.as_str(), "my_secret_value"); //     ^
+  // Perform operations with the exposed value                     |
+  // ...                                                           v
+  // to this line... -----------------------------------------------
 });
 
 // Expose the secret again and perform some operations with the exposed value; secret has been exposed once: `EC` = 2, `MEC` = 2;
 let (next_secret, exposed_value) = next_secret.expose_secret(|exposed_secret| {
-    assert_eq!(&*exposed_secret.as_str(), "my_secret_value");
-    // Perform operations with the exposed value
-    // ...
+  assert_eq!(&*exposed_secret.as_str(), "my_secret_value");
+  // Perform operations with the exposed value
+  // ...
 });
 ```
 
@@ -71,6 +73,57 @@ let (next_secret, exposed_value) = next_secret.expose_secret(|exposed_secret| {
 });
 ```
 
+**Runtime Checks**
+
+```rust
+use sosecrets_rs::{
+  prelude::*,
+  // Note, for runtime checks, you have to use the `RTExposeSecret` trait instead.
+  runtime::traits::RTExposeSecret,
+};
+use typenum::U2;
+
+// Define a secret with a maximum exposure count of 2
+let secret = RTSecret::<_, U2>::new("my_secret_value".to_string());
+
+// Expose the secret and perform some operations with the exposed value; secret has been exposed once: `EC` = 1, `MEC` = 2;
+let exposed_value = secret.expose_secret(|exposed_secret| {
+  // `exposed_secret` is only 'available' from the next line -------
+  assert_eq!(&*exposed_secret.as_str(), "my_secret_value"); //     ^
+  // Perform operations with the exposed value                     |
+  // ...                                                           v
+  // to this line... -----------------------------------------------
+});
+
+// Expose the secret again and perform some operations with the exposed value; secret has been exposed once: `EC` = 2, `MEC` = 2;
+let exposed_value = secret.expose_secret(|exposed_secret| {
+  assert_eq!(&*exposed_secret.as_str(), "my_secret_value");
+  // Perform operations with the exposed value
+  // ...
+});
+```
+
+**Try** to expose the secret again and perform some operations with the exposed value; secret has been exposed once: `EC` = 3, `MEC` = 2;
+The following is uncompilable.
+```compile_fail
+let exposed_value = secret.expose_secret(|exposed_secret| {
+  assert_eq!(&*exposed_secret.as_str(), "my_secret_value");
+  // Perform operations with the exposed value
+  // ...
+});
+```
+
+It is **impossible** to return the value (e.g. `exposed_secret` in the example above) passed into the closure, out of the closure. The following is uncompilable.
+
+```compile_fail
+let exposed_value = secret.expose_secret(|exposed_secret| {
+  assert_eq!(&*exposed_secret.as_str(), "my_secret_value");
+  // Perform operations with the exposed value
+  // ...
+  exposed_secret // impossible to return `exposed_secret` here
+});
+```
+
 See more in the [examples](https://github.com/jymchng/sosecrets-rs/tree/master/examples/jwt) directory.
 
 ## Features Configuration
@@ -91,6 +144,41 @@ sosecrets-rs = { version = "x.x.x", features = ["zeroize", "cloneable-secret", "
 - `ExposeSecret`: Trait for safely exposing secrets with a limited exposure count.
 - `CloneableSecret`: Trait for cloneable secrets.
 - `DebugSecret`: Trait for debuggable secrets.
+
+If the feature `"cloneable-secret"` is enabled, then you can 'clone' the secret.
+
+Example:
+```rust
+#[cfg(all(feature = "cloneable-secret", feature = "alloc"))]
+// Need to enable feature = "alloc" because `String` requires feature = "alloc".
+{
+  use sosecrets_rs::{
+      prelude::*,
+      traits::{CloneableSecret, ExposeSecret},
+  };
+  use typenum::U2;
+
+  // Define a secret with a maximum exposure count of 2
+  let secret = Secret::<_, U2>::new("my_secret_value".to_string());
+
+  // Clone the secret
+  let secret2 = secret.clone();
+
+  // Expose the secret and perform some operations with the exposed value; secret has been exposed once: `EC` = 1, `MEC` = 2;
+  let (next_secret, exposed_value) = secret.expose_secret(move |exposed_secret| {
+      // `exposed_secret` is only 'available' from the next line --------------------------^
+      let (next_secret2, exposed_value2) = secret2.expose_secret(|exposed_secret2| { //    |
+          assert_eq!(&*exposed_secret.as_str(), "my_secret_value"); //                     |
+          assert_eq!(&*exposed_secret2.as_str(), "my_secret_value"); //                    |
+          assert_eq!(&*exposed_secret2.as_str(), &*exposed_secret.as_str()); //            |
+          // Perform operations with the exposed value                                      |
+          // ...                                                                            |
+          // to this line... ---------------------------------------------------------------v
+      });
+  });
+}
+```
+
 
 # Minimum Supported Rust version
 
