@@ -71,7 +71,7 @@ let (next_secret, exposed_value) = next_secret.expose_secret(|exposed_secret| {
 });
 ```
 
-See more at the [examples](https://github.com/jymchng/sosecrets-rs/tree/master/examples/jwt) directory.
+See more in the [examples](https://github.com/jymchng/sosecrets-rs/tree/master/examples/jwt) directory.
 
 ## Features Configuration
 
@@ -94,9 +94,7 @@ sosecrets-rs = { version = "x.x.x", features = ["zeroize", "cloneable-secret", "
 
 # Minimum Supported Rust version
 
-The crate currently requires Rust 1.70. I have no intent of increasing the
-compiler version requirement of this crate beyond this. However, this is only
-guaranteed within a given minor version number.
+The crate currently requires Rust 1.70. I have no intent on increasing the compiler version requirement of this crate beyond this. However, this is only guaranteed within a given minor version number.
 
 # Tests
 

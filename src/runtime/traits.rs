@@ -1,5 +1,8 @@
 /// A trait for exposing secrets with runtime checking.
-pub trait RTExposeSecret<'secret, T, ErrorType: core::fmt::Display + core::fmt::Debug> {
+pub trait RTExposeSecret<'secret, T> {
+    /// The type representing the `Error` variant as part of the `Result` returned type in `try_expose_secret`.
+    type Error: core::fmt::Display + core::fmt::Debug;
+
     /// The type representing the exposed secret.
     type Exposed<'brand>
     where
@@ -27,7 +30,7 @@ pub trait RTExposeSecret<'secret, T, ErrorType: core::fmt::Display + core::fmt::
     fn try_expose_secret<ReturnType, ClosureType>(
         &self,
         scope: ClosureType,
-    ) -> Result<ReturnType, ErrorType>
+    ) -> Result<ReturnType, Self::Error>
     where
         for<'brand> ClosureType: FnOnce(Self::Exposed<'brand>) -> ReturnType;
 }

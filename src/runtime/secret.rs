@@ -23,8 +23,8 @@ use crate::traits::DebugSecret;
 
 /// A runtime secret with optional zeroization for the type `T` and exposure count tracking. It is the runtime version of `Secret<T, MEC, EC>`.
 pub struct RTSecret<
-    #[cfg(feature = "zeroize")] T: Zeroize,
-    #[cfg(not(feature = "zeroize"))] T,
+    #[cfg(feature = "zeroize")] T: Zeroize + 'static,
+    #[cfg(not(feature = "zeroize"))] T: 'static,
     MEC: ChooseMinimallyRepresentableUInt,
 >(
     /// `T` is the type of the value that is meant to be kept as a secret,
@@ -43,10 +43,14 @@ pub struct RTExposedSecret<'brand, T>(T, PhantomData<fn(&'brand ()) -> &'brand (
 /// It is meant to function almost identically to `secrecy::Secret`, except that the signature of `.expose_secret(...)` method is different.
 pub type SecrecySecret<T> = RTSecret<T, NumericalZeroSizedType>;
 
-impl<'secret, #[cfg(feature = "zeroize")] T: Zeroize, #[cfg(not(feature = "zeroize"))] T>
-    traits::RTExposeSecret<'secret, &'secret T, Infallible>
-    for RTSecret<T, NumericalZeroSizedType>
+impl<
+        'secret,
+        #[cfg(feature = "zeroize")] T: Zeroize + 'static,
+        #[cfg(not(feature = "zeroize"))] T: 'static,
+    > traits::RTExposeSecret<'secret, &'secret T> for RTSecret<T, NumericalZeroSizedType>
 {
+    type Error = Infallible;
+
     type Exposed<'brand> = RTExposedSecret<'brand, &'brand T>
     where
         'secret: 'brand;
@@ -254,9 +258,10 @@ impl<
         #[cfg(not(feature = "zeroize"))] T,
         // `IsGreater<U0, Output = True>` so that `RTSecret<T, U0>` cannot call `.expose_secret()`
         MEC: ChooseMinimallyRepresentableUInt + Unsigned + IsGreater<U0, Output = True> + Debug,
-    > traits::RTExposeSecret<'secret, &'secret T, error::ExposeSecretError<MEC>>
-    for RTSecret<T, MEC>
+    > traits::RTExposeSecret<'secret, &'secret T> for RTSecret<T, MEC>
 {
+    type Error = error::ExposeSecretError<MEC>;
+
     type Exposed<'brand> = RTExposedSecret<'brand, &'brand T>
     where
         'secret: 'brand;
