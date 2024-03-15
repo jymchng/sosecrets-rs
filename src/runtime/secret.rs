@@ -44,9 +44,10 @@ pub struct RTExposedSecret<'brand, T>(T, PhantomData<fn(&'brand ()) -> &'brand (
 pub type SecrecySecret<T> = RTSecret<T, NumericalZeroSizedType>;
 
 impl<'secret, #[cfg(feature = "zeroize")] T: Zeroize, #[cfg(not(feature = "zeroize"))] T>
-    traits::RTExposeSecret<'secret, &'secret T, Infallible>
-    for RTSecret<T, NumericalZeroSizedType>
+    traits::RTExposeSecret<'secret, &'secret T> for RTSecret<T, NumericalZeroSizedType>
 {
+    type Error = Infallible;
+
     type Exposed<'brand> = RTExposedSecret<'brand, &'brand T>
     where
         'secret: 'brand;
@@ -114,12 +115,7 @@ impl<'secret, #[cfg(feature = "zeroize")] T: Zeroize, #[cfg(not(feature = "zeroi
     where
         for<'brand> ClosureType: FnOnce(RTExposedSecret<'brand, &'brand T>) -> ReturnType,
     {
-        match self.try_expose_secret(scope) {
-            Ok(returned_value) => returned_value,
-            Err(_) => {
-                unreachable!("Impossible to return error since there is no check at all!");
-            }
-        }
+        scope(RTExposedSecret(&self.0, PhantomData))
     }
 
     /// Exposes the secret **without** any runtime checking that the exposure count is not more than the maximally allowed exposure count represented by the type parameter `MEC`.
@@ -246,6 +242,20 @@ impl<
     pub fn exposure_count(&self) -> <MEC as ChooseMinimallyRepresentableUInt>::Output {
         self.1.get()
     }
+
+    #[inline(always)]
+    fn can_expose(&self) -> bool
+    where
+        MEC: typenum::Unsigned,
+    {
+        let ec = self.1.get();
+        let mec = MEC::cast_unsigned_to_self_type::<MEC>(__private::SealedToken {});
+        if ec >= mec {
+            return false;
+        };
+        self.1.set(ec + MEC::ONE);
+        true
+    }
 }
 
 impl<
@@ -254,9 +264,10 @@ impl<
         #[cfg(not(feature = "zeroize"))] T,
         // `IsGreater<U0, Output = True>` so that `RTSecret<T, U0>` cannot call `.expose_secret()`
         MEC: ChooseMinimallyRepresentableUInt + Unsigned + IsGreater<U0, Output = True> + Debug,
-    > traits::RTExposeSecret<'secret, &'secret T, error::ExposeSecretError<MEC>>
-    for RTSecret<T, MEC>
+    > traits::RTExposeSecret<'secret, &'secret T> for RTSecret<T, MEC>
 {
+    type Error = error::ExposeSecretError<MEC>;
+
     type Exposed<'brand> = RTExposedSecret<'brand, &'brand T>
     where
         'secret: 'brand;
@@ -328,11 +339,12 @@ impl<
     where
         for<'brand> ClosureType: FnOnce(RTExposedSecret<'brand, &'brand T>) -> ReturnType,
     {
-        match self.try_expose_secret(scope) {
-            Ok(returned_value) => returned_value,
-            Err(error::ExposeSecretError::ExposeMoreThanMaximallyAllow(err)) => {
-                panic!("`RTSecret` has already been exposed for {} times, the maximum number it is allowed to be exposed for is {} times.", err.ec, err.mec)
-            }
+        if self.can_expose() {
+            return scope(RTExposedSecret(&self.0, PhantomData));
+        } else {
+            let ec = self.exposure_count();
+            let mec = MEC::cast_unsigned_to_self_type::<MEC>(__private::SealedToken {});
+            panic!("`RTSecret` has already been exposed for {} times, the maximum number it is allowed to be exposed for is {} times.", ec, mec)
         }
     }
 
@@ -405,15 +417,15 @@ impl<
     where
         for<'brand> ClosureType: FnOnce(RTExposedSecret<'brand, &'brand T>) -> ReturnType,
     {
-        let ec_mut = self.1.get();
-        let mec = MEC::cast_unsigned_to_self_type::<MEC>(__private::SealedToken {});
-        if ec_mut >= mec {
-            return Err(error::ExposeSecretError::ExposeMoreThanMaximallyAllow(
-                error::ExposeMoreThanMaximallyAllowError { mec, ec: ec_mut },
-            ));
-        };
-        self.1.set(ec_mut + MEC::ONE);
-        Ok(scope(RTExposedSecret(&self.0, PhantomData)))
+        if self.can_expose() {
+            Ok(scope(RTExposedSecret(&self.0, PhantomData)))
+        } else {
+            let ec = self.exposure_count();
+            let mec = MEC::cast_unsigned_to_self_type::<MEC>(__private::SealedToken {});
+            Err(error::ExposeSecretError::ExposeMoreThanMaximallyAllow(
+                error::ExposeMoreThanMaximallyAllowError { mec, ec },
+            ))
+        }
     }
 }
 
