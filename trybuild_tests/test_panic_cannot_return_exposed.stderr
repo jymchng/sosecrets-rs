@@ -1,0 +1,5 @@
+error[E0507]: cannot move out of dereference of `ExposedSecret<'_, &A<i32>>`
+  --> trybuild_tests/test_panic_cannot_return_exposed.rs:26:24
+   |
+26 |             opt = Some(*exposed_secret);
+   |                        ^^^^^^^^^^^^^^^ move occurs because value has type `A<i32>`, which does not implement the `Copy` trait

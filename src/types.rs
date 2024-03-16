@@ -1,21 +1,15 @@
-use crate::traits::{
-    AsAtomic, ChooseMinimallyRepresentableUInt,
-    __private::{SealedToken, SealedTrait},
-};
-use typenum::{Unsigned, U0};
+use crate::traits::{ChooseMinimallyRepresentableUInt, __private};
 
-pub type Unchecked = U0;
+impl __private::SealedTrait for NumericalZeroSizedType {}
 
-impl SealedTrait for Unchecked {}
-
-impl ChooseMinimallyRepresentableUInt for Unchecked {
+impl ChooseMinimallyRepresentableUInt for NumericalZeroSizedType {
     type Output = NumericalZeroSizedType;
     type AtomicOutput = NumericalZeroSizedType;
 
-    const MIN: Self::Output = NumericalZeroSizedType {};
+    const ZERO: Self::Output = NumericalZeroSizedType {};
     const ONE: Self::Output = NumericalZeroSizedType {};
 
-    fn cast_unsigned_to_self_type<T: Unsigned>(_: SealedToken) -> Self::Output {
+    fn cast_unsigned_to_self_type<T: typenum::Unsigned>(_: __private::SealedToken) -> Self::Output {
         NumericalZeroSizedType {}
     }
 }
@@ -39,20 +33,4 @@ impl core::fmt::Display for NumericalZeroSizedType {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "NumericalZeroSizedType")
     }
-}
-
-impl AsAtomic for u8 {
-    type Output = core::sync::atomic::AtomicU8;
-}
-
-impl AsAtomic for u16 {
-    type Output = core::sync::atomic::AtomicU16;
-}
-
-impl AsAtomic for u32 {
-    type Output = core::sync::atomic::AtomicU32;
-}
-
-impl AsAtomic for u64 {
-    type Output = core::sync::atomic::AtomicU64;
 }

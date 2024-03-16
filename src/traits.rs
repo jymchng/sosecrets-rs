@@ -1,11 +1,14 @@
-use crate::macros::{impl_choose_int, impl_sealed_trait_for_uint};
+use crate::{
+    macros::{impl_choose_int, impl_sealed_trait_for_uint},
+    types::NumericalZeroSizedType,
+};
 use core::{
     cmp::PartialOrd,
     fmt::{Debug, Display},
     hash::Hash,
     ops::{Add, AddAssign},
 };
-use typenum::{IsLessOrEqual, Sum, True, Unsigned, U1};
+use typenum::{IsLessOrEqual, Sum, True, Unsigned, U0, U1};
 
 /// A trait for safely exposing secrets with a limited exposure count.
 ///
@@ -33,6 +36,7 @@ pub trait ExposeSecret<'max, T, MEC: Unsigned, EC: Unsigned>: Sized {
         Sum<EC, U1>: Unsigned + IsLessOrEqual<MEC, Output = True> + Add<U1>;
 
     /// Exposes the secret and returns the `Secret<T, _, _>` with an incremented count (i.e. `EC`), along with the result of a provided closure.
+    /// It is impossible to return `Self::Exposed` associated type out from the closure `scope`.
     ///
     /// # Parameters
     /// - `self`.
@@ -162,7 +166,10 @@ mod debug_secret {
 
 impl_sealed_trait_for_uint!(u8, u16, u32, u64, u128);
 
+/// A trait for types that can choose the minimally representable unsigned integer.
 pub trait ChooseMinimallyRepresentableUInt: __private::SealedTrait {
+    /// The Rust's primitive unsigned integer type that is minimally representable of the unsigned integer represented at the type level by `Self`.
+    /// e.g. If `Self` is `typenum::consts::U69`, then `Self::Output` is `u8`.
     type Output: AddAssign
         + Add<Self::Output, Output = Self::Output>
         + PartialOrd
@@ -175,13 +182,20 @@ pub trait ChooseMinimallyRepresentableUInt: __private::SealedTrait {
         + Clone
         + Hash
         + Default;
+    /// Currently, a placeholder for future feature of this crate. Safe to put a placeholder here because this is a 'Sealed' trait.
     type AtomicOutput;
-    const MIN: Self::Output;
+    /// The additive identity of the type `Self::Output`, e.g. `0_usize`, `0_u32`.
+    const ZERO: Self::Output;
+    /// The multiplicative identity of the type `Self::Output`, e.g. `1_usize`, `1_u32`.
     const ONE: Self::Output;
 
+    /// A convenient method to convert the unsigned integer represented at the type level by `Self` to a value of type `Self::Output`.
+    /// e.g. converting from `typenum::consts::U69` to `69_u8`.
     fn cast_unsigned_to_self_type<T: Unsigned>(_: __private::SealedToken) -> Self::Output;
 }
 
+/// A trait for types that can be converted to their atomic representation.
+/// Currently, a placeholder for future feature of this crate. Safe to put a placeholder here because this is a 'Sealed' trait.
 pub trait AsAtomic: __private::SealedTrait {
     type Output;
 }
@@ -304,4 +318,38 @@ impl_choose_int! {
     B75 => u64;
     B76 => u64;
     B77 => u64;
+}
+
+impl __private::SealedTrait for U0 {}
+
+impl ChooseMinimallyRepresentableUInt for U0 {
+    type Output = NumericalZeroSizedType;
+    type AtomicOutput = NumericalZeroSizedType;
+
+    const ZERO: Self::Output = NumericalZeroSizedType {};
+    const ONE: Self::Output = NumericalZeroSizedType {};
+
+    fn cast_unsigned_to_self_type<T: Unsigned>(_: __private::SealedToken) -> Self::Output {
+        NumericalZeroSizedType {}
+    }
+}
+
+#[cfg(target_has_atomic = "8")]
+impl AsAtomic for u8 {
+    type Output = core::sync::atomic::AtomicU8;
+}
+
+#[cfg(target_has_atomic = "16")]
+impl AsAtomic for u16 {
+    type Output = core::sync::atomic::AtomicU16;
+}
+
+#[cfg(target_has_atomic = "32")]
+impl AsAtomic for u32 {
+    type Output = core::sync::atomic::AtomicU32;
+}
+
+#[cfg(target_has_atomic = "64")]
+impl AsAtomic for u64 {
+    type Output = core::sync::atomic::AtomicU64;
 }

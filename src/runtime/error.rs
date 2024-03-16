@@ -1,11 +1,13 @@
 use crate::traits::ChooseMinimallyRepresentableUInt;
 
+/// An error representing that the secret has been exposed more times than allowed.
 #[derive(Debug)]
 #[non_exhaustive]
 pub enum ExposeSecretError<MEC: ChooseMinimallyRepresentableUInt> {
     ExposeMoreThanMaximallyAllow(ExposeMoreThanMaximallyAllowError<MEC>),
 }
 
+/// An error representing that the secret has been exposed more times than allowed.
 #[derive(Debug)]
 pub struct ExposeMoreThanMaximallyAllowError<MEC: ChooseMinimallyRepresentableUInt> {
     pub mec: <MEC as ChooseMinimallyRepresentableUInt>::Output,

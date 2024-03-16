@@ -55,7 +55,7 @@ macro_rules! impl_choose_int {
         impl<$($prev_args,)* $arg> $crate::traits::ChooseMinimallyRepresentableUInt for $crate::prelude::typenum::uint::UInt<$prev_num, $arg> {
             type Output = $out;
             type AtomicOutput = <$out as $crate::traits::AsAtomic>::Output;
-            const MIN: Self::Output = Self::Output::MIN;
+            const ZERO: Self::Output = Self::Output::MIN;
             const ONE: Self::Output = 1;
 
             fn cast_unsigned_to_self_type<T: $crate::prelude::typenum::uint::Unsigned>(_: $crate::traits::__private::SealedToken) -> Self::Output {
