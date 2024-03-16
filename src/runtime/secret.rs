@@ -44,7 +44,7 @@ pub struct RTExposedSecret<'brand, T>(T, PhantomData<fn(&'brand ()) -> &'brand (
 pub type SecrecySecret<T> = RTSecret<T, NumericalZeroSizedType>;
 
 impl<'secret, #[cfg(feature = "zeroize")] T: Zeroize, #[cfg(not(feature = "zeroize"))] T>
-    traits::RTExposeSecret<'secret, &'secret T> for RTSecret<T, NumericalZeroSizedType>
+    traits::RTExposeSecret<'secret, &'secret T> for SecrecySecret<T>
 {
     type Error = Infallible;
 
@@ -300,7 +300,7 @@ impl<
     /// assert_eq!(returned_value.inner, 70);
     /// ```
     ///
-    /// Example:
+    /// Example (this does **NOT** compile):
     /// ```compile_fail
     /// use sosecrets_rs::{
     ///     prelude::typenum::U2,

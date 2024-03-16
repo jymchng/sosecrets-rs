@@ -10,7 +10,7 @@ Secrets Management crate with
 1. type level and compile-time guarantees and
 2. each reference corresponds to each secret that can only be exposed or revealed under a lexical scope with an invariant lifetime
 
-It is similar to the [`secrecy`](https://github.com/iqlusioninc/crates/tree/main/secrecy) crate but with type level and compile-time guarantees that the `Secret<T, MEC, EC>` value is not ’exposed’ more than `MEC` number of times and is only exposed under a well-defined lexical scope.
+It is similar to the [`secrecy`](https://github.com/iqlusioninc/crates/tree/main/secrecy) crate but with type level and compile-time guarantees that the [`Secret<T, MEC, EC>`](prelude::Secret) value is not ’exposed’ more than `MEC` number of times and is only exposed under a well-defined lexical scope.
 
 It makes use of the [`typenum`](https://github.com/paholg/typenum/tree/main) crate for all its compile-time guarantees.
 
@@ -18,12 +18,12 @@ It makes use of the [`typenum`](https://github.com/paholg/typenum/tree/main) cra
 
 - **Exposure Control:** Secret values can only be exposed a limited number of times, preventing unintentional information leaks. This is guaranteed at compile time. Secrets are exposed and available for use with an [invariant](https://doc.rust-lang.org/nomicon/subtyping.html#variance) lifetime, identifiable with a clear lexical scope.
 - **Zeroization:** If configured with the "zeroize" feature, secrets are zeroized upon dropping them.
-- **Cloneable Secrets:** With the "cloneable-secret" feature, `Secret` values can be cloned if the underlying type, `T`, implements the `CloneableSecret` trait.
-- **Debugging Secrets:** The "debug-secret" feature enables the debugging of `Secret` values if the underlying type, `T`, implements the `DebugSecret` trait.
+- **Cloneable Secrets:** With the "cloneable-secret" feature, `Secret` values can be cloned if the underlying type, `T`, implements the [`CloneableSecret`](traits::CloneableSecret) trait.
+- **Debugging Secrets:** The "debug-secret" feature enables the debugging of `Secret` values if the underlying type, `T`, implements the [`DebugSecret`](traits::DebugSecret) trait.
 
-## Usage Example
+## Usage Examples
 
-**Compile Time Checks**
+## Compile Time Checks
 
 ```rust
 use sosecrets_rs::{
@@ -73,7 +73,7 @@ let (next_secret, exposed_value) = next_secret.expose_secret(|exposed_secret| {
 });
 ```
 
-**Runtime Checks**
+## Runtime Checks
 
 ```rust
 use sosecrets_rs::{
@@ -124,6 +124,33 @@ let exposed_value = secret.expose_secret(|exposed_secret| {
 });
 ```
 
+## Substitute for the `secrecy` crate
+
+You can use the [`SecrecySecret`](prelude::SecrecySecret) type as a substitute for the [`Secret<T>`](https://docs.rs/secrecy/0.8.0/secrecy/struct.Secret.html) in [`secrecy`](https://crates.io/crates/secrecy) crate.
+
+```rust
+use sosecrets_rs::{
+  prelude::*,
+  // Note, for runtime checks, you have to use the `RTExposeSecret` trait instead.
+  runtime::traits::RTExposeSecret,
+};
+use typenum::U2;
+
+// Define a secret with a maximum exposure count of 2
+let secret = SecrecySecret::new("my_secret_value".to_string());
+
+// Expose the secret and perform some operations with the exposed value as many times as you like.
+for _ in 0..=1_000_000 {
+  let exposed_value = secret.expose_secret(|exposed_secret| {
+  // `exposed_secret` is only 'available' from the next line -------
+  assert_eq!(&*exposed_secret.as_str(), "my_secret_value"); //     ^
+  // Perform operations with the exposed value                     |
+  // ...                                                           v
+  // to this line... -----------------------------------------------
+  });
+}
+```
+
 See more in the [examples](https://github.com/jymchng/sosecrets-rs/tree/master/examples/jwt) directory.
 
 ## Features Configuration
@@ -137,15 +164,17 @@ sosecrets-rs = { version = "x.x.x", features = ["zeroize", "cloneable-secret", "
 
 ## Modules
 
-- `prelude`: Module for easily importing common items.
+- [`prelude`](prelude): Module for easily importing common items.
+- [`runtime`](runtime): Module for [`RTSecret<T>`](prelude::RTSecret) and [`RTExposeSecret`](runtime::traits::RTExposeSecret).
 
 ## Traits
 
-- `ExposeSecret`: Trait for safely exposing secrets with a limited exposure count.
-- `CloneableSecret`: Trait for cloneable secrets.
-- `DebugSecret`: Trait for debuggable secrets.
+- [`ExposeSecret`](traits::ExposeSecret): Trait for safely exposing secrets with a limited exposure count at compile time.
+- [`RTExposeSecret`](runtime::traits::RTExposeSecret): Trait for safely exposing secrets with a limited exposure count at runtime time.
+- [`CloneableSecret`](traits::CloneableSecret): Trait for cloneable secrets.
+- [`DebugSecret`](traits::DebugSecret): Trait for debuggable secrets.
 
-If the feature `"cloneable-secret"` is enabled, then you can 'clone' the secret.
+For example, if the feature `"cloneable-secret"` is enabled, then you can 'clone' the secret.
 
 Example:
 ```rust
@@ -179,7 +208,6 @@ Example:
 }
 ```
 
-
 # Minimum Supported Rust version
 
 The crate currently requires Rust 1.70. I have no intent on increasing the compiler version requirement of this crate beyond this. However, this is only guaranteed within a given minor version number.
@@ -209,3 +237,11 @@ for inclusion in the work by you, as defined in the MIT license, without any add
 
 * For rendering substantial help in the design and implementations of `ExposeSecret` [[Rust Forum](https://users.rust-lang.org/t/making-a-value-of-a-type-undroppable-at-compile-time/102628/13?), [Rust Playground](https://play.rust-lang.org/?version=stable&mode=debug&edition=2021&gist=3c2e97e284c60c8a4067b77b6cfd72c7)] trait and its trait method, `expose_secret(...)` [[Rust Forum](https://users.rust-lang.org/t/making-a-value-of-a-type-undroppable-at-compile-time/102628/6?), [Rust Playground](https://play.rust-lang.org/?version=nightly&mode=debug&edition=2021&gist=adce4708492654b6ad888f9a6b5bc5d0)].
 * For teaching me the concept of [`invariant`](https://github.com/CAD97/generativity/blob/main/README.md) lifetime.
+
+## [Eric Michael Sumner](https://orcid.org/0000-0002-6439-9757)
+
+* For creating the macro `impl_choose_int!()` on [Rust Forum](https://users.rust-lang.org/t/making-a-type-level-type-function-with-typenum-crate/107008/3?). The macro helps to implement the trait [`ChooseMinimallyRepresentableUInt`](traits::ChooseMinimallyRepresentableUInt) for all type-level unsigned integers provided by the `typenum` crate that are representable from 1 bit to 64 bits at the type level.
+
+## [Simon Farnsworth](https://users.rust-lang.org/u/farnz/summary)
+
+* For providing advice on how to manage the optimizations done on [`RTSecret`](prelude::RTSecret) with regards to having the first field of the struct having different Rust's primitive unsigned integer types according to the type parameter `MEC` [[Link](https://users.rust-lang.org/t/rtsecret-t-std-cell-u8-is-the-same-size-as-rtsecret-t-std-cell-u16-why-and-how-to-optimize-such-that-former-is-smaller-than-latter/107396/20?)].
