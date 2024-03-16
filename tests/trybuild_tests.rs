@@ -42,6 +42,11 @@ fn test_compile_fails() {
 
     t.compile_fail("trybuild_tests/test_cannot_return_exposed_secret.rs");
 
+    t.compile_fail("trybuild_tests/test_panic_cannot_return_exposed.rs");
+
+    #[cfg(not(feature = "zeroize"))]
+    t.compile_fail("trybuild_tests/test_ref_cannot_leak_secret.rs");
+
     // t.compile_fail("trybuild_tests/test_compile_fail_eleven.rs");
 
     #[cfg(feature = "cloneable-secret")]

@@ -1,0 +1,5 @@
+error[E0507]: cannot move out of dereference of `RTExposedSecret<'_, &A>`
+  --> trybuild_tests/runtime/cannot_cross_unwind_if_not_copy.rs:31:27
+   |
+31 |             opt_a.replace(*exposed_secret);
+   |                           ^^^^^^^^^^^^^^^ move occurs because value has type `A`, which does not implement the `Copy` trait
