@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 04 April 2024
+<center><h1>V0.2.1 IS RELEASED</h1></center>
+
+1. Minor fixes to `README.md`.
+
 ## 17 March 2024
 <center><h1>V0.2.0 IS RELEASED</h1></center>
 
