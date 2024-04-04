@@ -148,7 +148,9 @@ let exposed_value = secret.expose_secret(|exposed_secret| {
 });
 ```
 
-Note: You can use the non-panicking variant of the method `expose_secret(...)` which is named as `try_expose_secret(...)`. `try_expose_secret(...)` returns an `Result::Err` if the exposure count is larger than what is maximally allowed.
+Note: You can use the non-panicking variant of the method `expose_secret(...)` which is named as `try_expose_secret(...)`.
+
+`try_expose_secret(...)` returns a `Result::Err` if the exposure count is larger than what is maximally allowed.
 
 It is **impossible** to return the value (e.g. `exposed_secret` in the example above) passed into the closure, out of the closure, **unless** `T` is `Copy`. The following is uncompilable.
 
@@ -171,7 +173,6 @@ use sosecrets_rs::{
   // Note, for runtime checks, you have to use the `RTExposeSecret` trait instead.
   runtime::traits::RTExposeSecret,
 };
-use typenum::U2;
 
 // Define a secret with NO maximum exposure count
 let secret = SecrecySecret::new("my_secret_value".to_string());
