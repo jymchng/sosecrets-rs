@@ -23,6 +23,16 @@ repos:
     -   id: cargo-check
     -   id: clippy
 
+-   repo: local
+    hooks:
+    -   id: cargo-doc-sanity
+        name: cargo-doc-sanity
+        description: cargo-doc-sanity
+        entry: bcargo doc --no-deps --all-features
+        language: system
+        types: [rust]
+        pass_filenames: false
+
 # -   repo: local
 #     hooks:
 #     -   id: cargo-test

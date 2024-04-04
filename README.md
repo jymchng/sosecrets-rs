@@ -44,7 +44,7 @@ let (next_secret, exposed_value) = secret.expose_secret(|exposed_secret| {
   // to this line... -----------------------------------------------
 });
 
-// Expose the secret again and perform some operations with the exposed value; secret has been exposed once: `EC` = 2, `MEC` = 2;
+// Expose the secret again and perform some operations with the exposed value; secret has been exposed twice: `EC` = 2, `MEC` = 2;
 let (next_secret, exposed_value) = next_secret.expose_secret(|exposed_secret| {
   assert_eq!(&*exposed_secret.as_str(), "my_secret_value");
   // Perform operations with the exposed value
@@ -52,7 +52,7 @@ let (next_secret, exposed_value) = next_secret.expose_secret(|exposed_secret| {
 });
 ```
 
-**Try** to expose the secret again and perform some operations with the exposed value; secret has been exposed once: `EC` = 3, `MEC` = 2;
+**Try** to expose the secret again and perform some operations with the exposed value; secret has been exposed the third time: `EC` = 3, `MEC` = 2;
 The following is uncompilable.
 ```compile_fail
 let (next_secret, exposed_value) = next_secret.expose_secret(|exposed_secret| {
@@ -62,7 +62,9 @@ let (next_secret, exposed_value) = next_secret.expose_secret(|exposed_secret| {
 });
 ```
 
-It is **impossible** to return the value (e.g. `exposed_secret` in the example above) passed into the closure, out of the closure. The following is uncompilable.
+It is **impossible** to return the value (e.g. `exposed_secret` in the example above) passed into the closure, out of the closure.
+
+The following is uncompilable.
 
 ```compile_fail
 let (next_secret, exposed_value) = next_secret.expose_secret(|exposed_secret| {
@@ -72,6 +74,8 @@ let (next_secret, exposed_value) = next_secret.expose_secret(|exposed_secret| {
     exposed_secret // impossible to return `exposed_secret` here
 });
 ```
+
+Note: If `T` is `Copy`, then the above will compile successfully and `expose_secret(...)` method will return a **copy** of exposed `T`.
 
 ## Runtime Checks
 
@@ -95,7 +99,7 @@ let exposed_value = secret.expose_secret(|exposed_secret| {
   // to this line... -----------------------------------------------
 });
 
-// Expose the secret again and perform some operations with the exposed value; secret has been exposed once: `EC` = 2, `MEC` = 2;
+// Expose the secret again and perform some operations with the exposed value; secret has been exposed twice: `EC` = 2, `MEC` = 2;
 let exposed_value = secret.expose_secret(|exposed_secret| {
   assert_eq!(&*exposed_secret.as_str(), "my_secret_value");
   // Perform operations with the exposed value
@@ -103,9 +107,40 @@ let exposed_value = secret.expose_secret(|exposed_secret| {
 });
 ```
 
-**Try** to expose the secret again and perform some operations with the exposed value; secret has been exposed once: `EC` = 3, `MEC` = 2;
-The following is uncompilable.
-```compile_fail
+**Try** to expose the secret again and perform some operations with the exposed value; secret has been exposed the third time: `EC` = 3, `MEC` = 2;
+
+`.expose_secret(...)` method will then `panic` with the message:
+
+```bash
+`RTSecret\` has already been exposed for 2 times, the maximum number it is allowed to be exposed for is 2 times."
+```
+
+```rust,should_panic
+# use sosecrets_rs::{
+#   prelude::*,
+#   // Note, for runtime checks, you have to use the `RTExposeSecret` trait instead.
+#   runtime::traits::RTExposeSecret,
+# };
+# use typenum::U2;
+#
+# // Define a secret with a maximum exposure count of 2
+# let secret = RTSecret::<_, U2>::new("my_secret_value".to_string());
+#
+# // Expose the secret and perform some operations with the exposed value; secret has been exposed once: `EC` = 1, `MEC` = 2;
+# let exposed_value = secret.expose_secret(|exposed_secret| {
+#   // `exposed_secret` is only 'available' from the next line -------
+#   assert_eq!(&*exposed_secret.as_str(), "my_secret_value"); //     ^
+#   // Perform operations with the exposed value                     |
+#   // ...                                                           v
+#   // to this line... -----------------------------------------------
+# });
+#
+# // Expose the secret again and perform some operations with the exposed value; secret has been exposed twice: `EC` = 2, `MEC` = 2;
+# let exposed_value = secret.expose_secret(|exposed_secret| {
+#   assert_eq!(&*exposed_secret.as_str(), "my_secret_value");
+#   // Perform operations with the exposed value
+#   // ...
+# });
 let exposed_value = secret.expose_secret(|exposed_secret| {
   assert_eq!(&*exposed_secret.as_str(), "my_secret_value");
   // Perform operations with the exposed value
@@ -113,7 +148,9 @@ let exposed_value = secret.expose_secret(|exposed_secret| {
 });
 ```
 
-It is **impossible** to return the value (e.g. `exposed_secret` in the example above) passed into the closure, out of the closure. The following is uncompilable.
+Note: You can use the non-panicking variant of the method `expose_secret(...)` which is named as `try_expose_secret(...)`. `try_expose_secret(...)` returns an `Result::Err` if the exposure count is larger than what is maximally allowed.
+
+It is **impossible** to return the value (e.g. `exposed_secret` in the example above) passed into the closure, out of the closure, **unless** `T` is `Copy`. The following is uncompilable.
 
 ```compile_fail
 let exposed_value = secret.expose_secret(|exposed_secret| {
@@ -136,7 +173,7 @@ use sosecrets_rs::{
 };
 use typenum::U2;
 
-// Define a secret with a maximum exposure count of 2
+// Define a secret with NO maximum exposure count
 let secret = SecrecySecret::new("my_secret_value".to_string());
 
 // Expose the secret and perform some operations with the exposed value as many times as you like.
@@ -165,7 +202,7 @@ sosecrets-rs = { version = "x.x.x", features = ["zeroize", "cloneable-secret", "
 ## Modules
 
 - [`prelude`](prelude): Module for easily importing common items.
-- [`runtime`](runtime): Module for [`RTSecret<T>`](prelude::RTSecret) and [`RTExposeSecret`](runtime::traits::RTExposeSecret).
+- [`runtime`](runtime): Module for [`RTSecret<T>`](prelude::RTSecret), [`SecrecySecret`](prelude::SecrecySecret) and [`RTExposeSecret`](runtime::traits::RTExposeSecret).
 
 ## Traits
 
