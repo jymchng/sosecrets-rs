@@ -1,0 +1,22 @@
+error[E0271]: type mismatch resolving `<UInt<UInt<UInt<UInt<UInt<UInt<UInt<UTerm, B1>, B0>, B0>, ...>, ...>, ...>, ...> as IsLessOrEqual<...>>::Output == B1`
+ --> trybuild_tests/1_70/test_compile_fail_three.rs:7:21
+  |
+7 |     let new_secret: Secret<String, U5, U67> = Secret::new(secret);
+  |                     ^^^^^^^^^^^^^^^^^^^^^^^ expected `B1`, found `B0`
+  |
+note: required by a bound in `Secret`
+ --> src/secret.rs
+  |
+  |     EC: Add<U1> + IsLessOrEqual<MEC, Output = True> + Unsigned = U0,
+  |                                      ^^^^^^^^^^^^^ required by this bound in `Secret`
+
+error[E0308]: mismatched types
+ --> trybuild_tests/1_70/test_compile_fail_three.rs:7:47
+  |
+7 |     let new_secret: Secret<String, U5, U67> = Secret::new(secret);
+  |                     -----------------------   ^^^^^^^^^^^^^^^^^^^ expected `Secret<String, UInt<..., ...>, ...>`, found `Secret<String, _>`
+  |                     |
+  |                     expected due to this
+  |
+  = note: expected struct `Secret<_, UInt<UInt<UInt<UTerm, B1>, B0>, B1>, UInt<UInt<UInt<UInt<UInt<UInt<UInt<UTerm, B1>, B0>, B0>, B0>, B0>, B1>, B1>>`
+             found struct `Secret<_, _, UTerm>`
