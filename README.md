@@ -1,6 +1,6 @@
 # sosecrets-rs
 <div align="center">
-  <img alt="GitHub Workflow Status" src="https://img.shields.io/github/actions/workflow/status/jymchng/sosecrets-rs/ci.yaml?label=build&&style=for-the-badge" height="23">
+  <img alt="GitHub Workflow Status" src="https://img.shields.io/github/actions/workflow/status/jymchng/sosecrets-rs/ci.yaml?style=for-the-badge" height="23">
   <a href="https://crates.io/crates/sosecrets-rs"><img alt="Crates.io Version" src="https://img.shields.io/crates/v/sosecrets-rs?logo=rust&style=for-the-badge" height="23"></a>
   <a href="https://docs.rs/sosecrets-rs"><img alt="docs.rs" src="https://img.shields.io/crates/v/sosecrets-rs?color=blue&label=docs&style=for-the-badge" height="23"></a>
 </div>
