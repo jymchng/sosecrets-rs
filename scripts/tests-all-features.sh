@@ -1,5 +1,9 @@
 #!/bin/bash
 
+echo "========== RUST TOOLCHAIN =========="
+rustup show
+echo "===================================="
+
 # Array of feature names
 features=("cloneable-secret", "alloc", "zeroize", "debug-secret")
 
