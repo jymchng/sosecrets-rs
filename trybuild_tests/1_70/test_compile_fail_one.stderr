@@ -1,0 +1,5 @@
+error[E0507]: cannot move out of dereference of `ExposedSecret<'_, &AStruct>`
+  --> trybuild_tests/1_70/test_compile_fail_one.rs:33:35
+   |
+33 |         ref_wrapper._inner.insert(*exposed_secret);
+   |                                   ^^^^^^^^^^^^^^^ move occurs because value has type `AStruct`, which does not implement the `Copy` trait

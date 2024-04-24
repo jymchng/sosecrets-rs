@@ -1,3 +1,4 @@
+#[rustversion::not(stable(1.70.0))]
 #[test]
 fn test_compile_fails() {
     let t = trybuild::TestCases::new();

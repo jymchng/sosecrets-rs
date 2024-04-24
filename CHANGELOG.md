@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 25 April 2024
+
+1. Added directory `1_70` under `trybuild_tests` directory to ensure the tests pass and make sense for Minimum Supported Rust Version 1.70.
+2. Wrote a build script `scripts/build-ver-tests.rs.rs` to copy the existing tests into the `1_70` directory.
+3. Made sure that this build script is only ran during testing phase by trigger it using `cargo eval scripts/build-ver-tests.rs`.
+4. GitHub Actions updated to run `scripts/tests-all-features-1.70.sh`, which is a bash script that wraps `scripts/tests-all-features.sh` to do testing on Rust version 1.70.
+
 ## 04 April 2024
 <center><h1>V0.2.1 IS RELEASED</h1></center>
 
