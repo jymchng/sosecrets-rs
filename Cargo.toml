@@ -16,7 +16,9 @@ exclude = [
     "scripts/*",
     ".pre-*.yaml",
     ".github/*",
-    ".gitignore"
+    ".gitignore",
+    "assets",
+    "CHANGELOG.md"
 ]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
