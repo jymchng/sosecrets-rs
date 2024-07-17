@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 18 July 2024
+
+1. Added a logo and many badges to README.
+
 ## 25 April 2024
 
 1. Added directory `1_70` under `trybuild_tests` directory to ensure the tests pass and make sense for Minimum Supported Rust Version 1.70.

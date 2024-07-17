@@ -1,9 +1,72 @@
-# sosecrets-rs
+
 <div align="center">
-  <img alt="GitHub Workflow Status" src="https://img.shields.io/github/actions/workflow/status/jymchng/sosecrets-rs/ci.yaml?style=for-the-badge" height="23">
-  <a href="https://crates.io/crates/sosecrets-rs"><img alt="Crates.io Version" src="https://img.shields.io/crates/v/sosecrets-rs?logo=rust&style=for-the-badge" height="23"></a>
-  <a href="https://docs.rs/sosecrets-rs"><img alt="docs.rs" src="https://img.shields.io/crates/v/sosecrets-rs?color=blue&label=docs&style=for-the-badge" height="23"></a>
+  <h1>sosecrets-rs</h1>
+  <img src="./assets/sosecrets-rs-logowebp.webp" height="200"><p><p>
+  <a href="https://opensource.org/licenses/MIT">
+    <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License" height="20">
+  </a>
+  <a href="https://github.com/jymchng/sosecrets-rs/issues">
+    <img src="https://img.shields.io/github/issues/jymchng/sosecrets-rs" alt="GitHub issues" height="20">
+  </a>
+  <a href="https://github.com/jymchng/sosecrets-rs/network">
+    <img src="https://img.shields.io/github/forks/jymchng/sosecrets-rs" alt="GitHub forks" height="20">
+  </a>
+  <a href="https://github.com/jymchng/sosecrets-rs/stargazers">
+    <img src="https://img.shields.io/github/stars/jymchng/sosecrets-rs" alt="GitHub stars" height="20">
+  </a>
+  <a href="https://github.com/jymchng/sosecrets-rs">
+    <img src="https://img.shields.io/github/license/jymchng/sosecrets-rs" alt="GitHub license" height="20">
+  </a>
+  <a href="https://github.com/jymchng/sosecrets-rs/commits/main">
+    <img src="https://img.shields.io/github/last-commit/jymchng/sosecrets-rs" alt="GitHub last commit" height="20">
+  </a>
+  <a href="https://github.com/jymchng/sosecrets-rs/graphs/contributors">
+    <img src="https://img.shields.io/github/contributors/jymchng/sosecrets-rs" alt="GitHub contributors" height="20">
+  </a>
+  <a href="https://github.com/jymchng/sosecrets-rs/pulls">
+    <img src="https://img.shields.io/github/issues-pr/jymchng/sosecrets-rs" alt="GitHub pull requests" height="20">
+  </a>
+  <a href="https://github.com/jymchng/sosecrets-rs/releases">
+    <img src="https://img.shields.io/github/release/jymchng/sosecrets-rs" alt="GitHub release" height="20">
+  </a>
+  <a href="https://github.com/jymchng/sosecrets-rs">
+    <img src="https://img.shields.io/github/repo-size/jymchng/sosecrets-rs" alt="GitHub repo size" height="20">
+  </a>
+  <a href="https://github.com/jymchng/sosecrets-rs/commits">
+    <img src="https://img.shields.io/github/commit-activity/m/jymchng/sosecrets-rs" alt="GitHub commit activity" height="20">
+  </a>
+  <a href="https://github.com/jymchng/sosecrets-rs">
+    <img src="https://img.shields.io/github/languages/code-size/jymchng/sosecrets-rs" alt="GitHub code size in bytes" height="20">
+  </a>
+  <a href="https://github.com/jymchng/sosecrets-rs">
+    <img src="https://img.shields.io/github/languages/count/jymchng/sosecrets-rs" alt="GitHub language count" height="20">
+  </a>
+  <a href="https://github.com/jymchng/sosecrets-rs">
+    <img src="https://img.shields.io/github/languages/top/jymchng/sosecrets-rs" alt="GitHub top language" height="20">
+  </a>
+  <a href="https://github.com/jymchng/sosecrets-rs/releases">
+    <img src="https://img.shields.io/github/downloads/jymchng/sosecrets-rs/total" alt="GitHub download count" height="20">
+  </a>
+  <a href="https://github.com/jymchng/sosecrets-rs/watchers">
+    <img src="https://img.shields.io/github/watchers/jymchng/sosecrets-rs" alt="GitHub watchers" height="20">
+  </a>
+  <a href="https://github.com/jymchng">
+    <img src="https://img.shields.io/github/followers/jymchng?label=Follow" alt="GitHub followers" height="20">
+  </a>
+  <a href="https://github.com/jymchng/sosecrets-rs/discussions">
+    <img src="https://img.shields.io/github/discussions/jymchng/sosecrets-rs" alt="GitHub discussions" height="20">
+  </a>
+  <a href="https://github.com/jymchng/sosecrets-rs/issues?q=is%3Aissue+is%3Aclosed">
+    <img src="https://img.shields.io/github/issues-closed/jymchng/sosecrets-rs" alt="GitHub issues closed" height="20">
+  </a>
+  <a href="https://github.com/jymchng/sosecrets-rs/milestones">
+    <img src="https://img.shields.io/github/milestones/all/jymchng/sosecrets-rs" alt="GitHub milestones" height="20">
+  </a>
+  <a href="https://github.com/sponsors/jymchng">
+    <img src="https://img.shields.io/badge/funding-donate-brightgreen" alt="GitHub funding" height="20">
+  </a>
 </div>
+
 
 Secrets Management crate with
 

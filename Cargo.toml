@@ -1,6 +1,6 @@
 [package]
 name = "sosecrets-rs"
-version = "0.2.4"
+version = "0.2.5"
 edition = "2021"
 authors = ["Jim Chng <jimchng@outlook.com>"]
 rust-version = "1.70"
@@ -16,7 +16,9 @@ exclude = [
     "scripts/*",
     ".pre-*.yaml",
     ".github/*",
-    ".gitignore"
+    ".gitignore",
+    "assets",
+    "CHANGELOG.md"
 ]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
